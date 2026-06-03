@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Loader2, FileEdit, CheckCircle, HelpCircle } from "lucide-react";
+import { Loader2, FileEdit, CheckCircle } from "lucide-react";
 
-import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
 import QuillEditor from "../../components/QuillEditor";
 import { apiFetch } from "../../lib/api";
 
 export default function BerandaSmmSmap() {
   // Main states
-  const [selectedYear, setSelectedYear] = useState("2026");
+  const [selectedYear, setSelectedYear] = useState("");
   const [fakultasList, setFakultasList] = useState([]);
-  const [dtmList, setDtmList] = useState([]);
-  const [viewMode, setViewMode] = useState("list"); // "list" | "edit"
-
-  // Selected DTM states
+  const [selectedFakultasId, setSelectedFakultasId] = useState("");
   const [selectedDtm, setSelectedDtm] = useState(null);
-  const [selectedFakultas, setSelectedFakultas] = useState(null);
 
   // Form states for temuan
   const [temuanFormState, setTemuanFormState] = useState({
@@ -25,6 +20,7 @@ export default function BerandaSmmSmap() {
 
   // Loading & notifications
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingDtm, setIsLoadingDtm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState(null);
 
@@ -34,56 +30,67 @@ export default function BerandaSmmSmap() {
     setNotification({ message, type });
   };
 
-  // 1. Initial Data Fetching
-  const loadInitialData = async () => {
-    setIsLoading(true);
-    try {
-      const [fakData, dtmData] = await Promise.all([
-        apiFetch("/api/fakultas"),
-        apiFetch(`/api/smm-smap/dtm?tahunAnggaran=${selectedYear}`)
-      ]);
-      setFakultasList(fakData);
-      setDtmList(dtmData);
-    } catch (err) {
-      showNotification(err.message || "Gagal mengambil data awal", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Generate years list (from 2023 to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from(
+    { length: currentYear - 2023 + 1 },
+    (_, i) => (2023 + i).toString()
+  );
 
+  // Determine selected Fakultas object
+  const selectedFakultas =
+    fakultasList.find((f) => f.id === Number(selectedFakultasId)) || null;
+
+  // 1. Fetch Fakultas list on mount
   useEffect(() => {
-    loadInitialData();
-  }, [selectedYear]);
+    const fetchFakultas = async () => {
+      setIsLoading(true);
+      try {
+        const data = await apiFetch("/api/fakultas");
+        setFakultasList(Array.isArray(data) ? data : []);
+      } catch (err) {
+        showNotification(err.message || "Gagal mengambil data unit kerja", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchFakultas();
+  }, []);
 
-  // Find existing DTM helper
-  const findDtm = (fakultasId) => {
-    return dtmList.find((d) => d.fakultasId === fakultasId);
-  };
-
-  // 2. Select or Create DTM on Action Button Click
-  const handleDtmAction = async (fakultas) => {
-    setIsSaving(true);
-    setSelectedFakultas(fakultas);
-    try {
-      const dtm = await apiFetch("/api/smm-smap/select-or-create", {
-        method: "POST",
-        body: JSON.stringify({
-          namaFakultas: fakultas.namaFakultas,
-          tahunAnggaran: selectedYear,
-        })
-      });
-      setSelectedDtm(dtm);
+  // 2. Reactive Fetch or Create DTM on dropdown selection change
+  useEffect(() => {
+    if (selectedFakultas && selectedYear) {
+      const initDtm = async () => {
+        setIsLoadingDtm(true);
+        try {
+          const dtm = await apiFetch("/api/smm-smap/select-or-create", {
+            method: "POST",
+            body: JSON.stringify({
+              namaFakultas: selectedFakultas.namaFakultas,
+              tahunAnggaran: selectedYear,
+            }),
+          });
+          setSelectedDtm(dtm);
+          setTemuanFormState({
+            detailTemuan: dtm.detailTemuan || "",
+            kodeTemuan: dtm.kodeTemuan || "",
+          });
+        } catch (err) {
+          showNotification("Gagal memproses DTM SMM-SMAP: " + err.message, "error");
+          setSelectedDtm(null);
+        } finally {
+          setIsLoadingDtm(false);
+        }
+      };
+      initDtm();
+    } else {
+      setSelectedDtm(null);
       setTemuanFormState({
-        detailTemuan: dtm.detailTemuan || "",
-        kodeTemuan: dtm.kodeTemuan || "",
+        detailTemuan: "",
+        kodeTemuan: "",
       });
-      setViewMode("edit");
-    } catch (err) {
-      showNotification(err.message || "Gagal memproses DTM SMM-SMAP", "error");
-    } finally {
-      setIsSaving(false);
     }
-  };
+  }, [selectedFakultasId, selectedYear]);
 
   // 3. Save Temuan
   const handleSaveTemuan = async (e) => {
@@ -101,11 +108,6 @@ export default function BerandaSmmSmap() {
       });
       setSelectedDtm(updated);
       showNotification("Data temuan dan kode temuan berhasil disimpan");
-      
-      // Update local item in list to reflect state immediately when going back
-      setDtmList((prev) =>
-        prev.map((item) => (item.id === updated.id ? updated : item))
-      );
     } catch (err) {
       showNotification("Gagal menyimpan temuan: " + err.message, "error");
     } finally {
@@ -113,27 +115,8 @@ export default function BerandaSmmSmap() {
     }
   };
 
-  const handleBackToList = () => {
-    setViewMode("list");
-    setSelectedDtm(null);
-    setSelectedFakultas(null);
-    loadInitialData(); // reload lists to sync status
-  };
-
-  const isTemuanFilled = (dtm) => {
-    if (!dtm || !dtm.detailTemuan) return false;
-    try {
-      // Check if it's Quill JSON operations
-      const parsed = JSON.parse(dtm.detailTemuan);
-      const ops = parsed.ops || parsed;
-      if (Array.isArray(ops)) {
-        return ops.some(op => op.insert && op.insert.trim().length > 0);
-      }
-    } catch (_) {
-      // Fallback plain string check
-      return dtm.detailTemuan.trim().length > 0;
-    }
-    return false;
+  const handleCancel = () => {
+    setSelectedFakultasId("");
   };
 
   return (
@@ -154,199 +137,156 @@ export default function BerandaSmmSmap() {
             Input Temuan SMM-SMAP
           </h1>
           <p className="text-xs text-gray-500 mt-1">
-            {viewMode === "list"
-              ? "Kelola dan input detail uraian temuan audit di seluruh unit kerja."
-              : `Edit Temuan: ${selectedFakultas?.namaFakultas}`}
+            Pilih unit kerja dan tahun anggaran untuk mengelola detail uraian temuan audit di seluruh unit kerja.
           </p>
         </div>
+      </div>
 
-        {viewMode === "list" ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-700">Tahun Anggaran:</span>
-            <YearDropdown value={selectedYear} onChange={setSelectedYear} />
+      {/* DROPDOWN SELECTORS SIDE-BY-SIDE */}
+      <div className="bg-white rounded-xl border border-gray-250 shadow-sm p-5">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-2 gap-2 text-gray-500">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            <span className="text-xs font-medium">Memuat daftar unit kerja...</span>
           </div>
         ) : (
-          <button
-            onClick={handleBackToList}
-            className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali ke Daftar
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Unit Kerja Dropdown */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Unit Kerja
+              </label>
+              <select
+                value={selectedFakultasId}
+                onChange={(e) => setSelectedFakultasId(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white text-gray-800 shadow-xs"
+              >
+                <option value="">-- Pilih Unit Kerja --</option>
+                {fakultasList.map((fak) => (
+                  <option key={fak.id} value={fak.id}>
+                    {fak.namaFakultas}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tahun Anggaran Dropdown */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Tahun Anggaran
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white text-gray-800 shadow-xs"
+              >
+                <option value="">-- Pilih Tahun Anggaran --</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* MAIN VIEW: LIST MODE */}
-      {viewMode === "list" && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              <span className="text-sm font-medium">Memuat data unit kerja...</span>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
-                    <th className="px-6 py-4 border-r border-gray-150">Unit Kerja</th>
-                    <th className="px-6 py-4 text-center border-r border-gray-150">Status DTM</th>
-                    <th className="px-6 py-4 text-center border-r border-gray-150">Status Input Temuan</th>
-                    <th className="px-6 py-4 text-center w-40">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm text-gray-700 bg-white">
-                  {fakultasList.map((fak) => {
-                    const dtm = findDtm(fak.id);
-                    const isCreated = !!dtm;
-                    const isFilled = isCreated && isTemuanFilled(dtm);
+      {/* DETAIL WORKSPACE VIEW */}
+      {selectedFakultas && selectedYear ? (
+        isLoadingDtm ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white rounded-xl border border-gray-250 shadow-xs">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="text-sm font-medium">Memuat data DTM SMM-SMAP...</span>
+          </div>
+        ) : selectedDtm ? (
+          <div className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm space-y-6 max-w-4xl">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">
+                  Input Temuan Masalah SMM-SMAP
+                </h2>
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  Unit Kerja: {selectedFakultas?.namaFakultas} | Tahun Anggaran: {selectedYear}
+                </p>
+              </div>
 
-                    return (
-                      <tr key={fak.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-gray-800 border-r border-gray-150">
-                          {fak.namaFakultas}
-                        </td>
-
-                        {/* STATUS DTM */}
-                        <td className="px-6 py-4 border-r border-gray-150">
-                          <div className="flex justify-center">
-                            {isCreated ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Sudah Dibuat
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Belum Dibuat
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* STATUS INPUT TEMUAN */}
-                        <td className="px-6 py-4 border-r border-gray-150">
-                          <div className="flex justify-center">
-                            {isFilled ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Sudah Diisi
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                Belum Diisi
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* ACTION */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-center">
-                            <button
-                              disabled={isSaving}
-                              onClick={() => handleDtmAction(fak)}
-                              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 ${
-                                isCreated
-                                  ? "bg-gray-800 text-white hover:bg-gray-700"
-                                  : "bg-indigo-650 text-white hover:bg-indigo-700 bg-indigo-600"
-                              }`}
-                            >
-                              {isCreated ? "Buka" : "Buat DTM"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* EDIT VIEW: QUILL EDITOR FORM */}
-      {viewMode === "edit" && selectedDtm && (
-        <div className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm space-y-6 max-w-4xl">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div>
-              <h2 className="text-sm font-bold text-gray-900">
-                Input Temuan Masalah SMM-SMAP
-              </h2>
-              <p className="text-[10px] text-gray-500 mt-0.5">
-                Unit Kerja: {selectedFakultas?.namaFakultas} | Tahun Anggaran: {selectedYear}
-              </p>
+              {selectedDtm.statusDtm === "SUDAH_DITERUSKAN" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-green-300 bg-green-50 text-green-800 text-[10px] font-semibold">
+                  <CheckCircle className="w-3 h-3" />
+                  Selesai (Read Only / Disarankan)
+                </span>
+              )}
             </div>
 
             {selectedDtm.statusDtm === "SUDAH_DITERUSKAN" && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-green-300 bg-green-50 text-green-800 text-[10px] font-semibold">
-                <CheckCircle className="w-3 h-3" />
-                Selesai (Read Only / Disarankan)
-              </span>
+              <div className="p-3 border border-amber-200 bg-amber-50 text-amber-900 rounded text-xs">
+                <strong>Info:</strong> DTM ini telah ditandai <strong>Selesai</strong>.
+              </div>
             )}
+
+            <form onSubmit={handleSaveTemuan} className="space-y-6">
+              {/* KODE TEMUAN */}
+              <div>
+                 <label className="block text-xs font-semibold text-gray-700 mb-1">
+                   Kode Temuan <span className="text-rose-500">*</span>
+                 </label>
+                 <input
+                   type="text"
+                   required
+                   value={temuanFormState.kodeTemuan}
+                   onChange={(e) =>
+                     setTemuanFormState({ ...temuanFormState, kodeTemuan: e.target.value })
+                   }
+                   placeholder="Masukkan kode temuan (e.g., SMAP-01, SMAP-002)"
+                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white text-gray-800"
+                 />
+              </div>
+
+              {/* DETAIL TEMUAN (Quill Editor) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Uraian Temuan (Quill Editor) <span className="text-rose-500">*</span>
+                </label>
+                <QuillEditor
+                  value={temuanFormState.detailTemuan}
+                  onChange={(opsJson) =>
+                    setTemuanFormState({ ...temuanFormState, detailTemuan: opsJson })
+                  }
+                  quillInstanceRef={quillRef}
+                />
+                <p className="text-[10px] text-gray-400 mt-2">
+                  Gunakan editor di atas untuk menyusun uraian temuan secara rapi (tebal, miring, daftar poin, dsb.).
+                </p>
+              </div>
+
+              {/* FOOTER ACTIONS */}
+              <div className="flex items-center justify-end gap-3 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="px-4 py-2 border rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-55 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-gray-850 hover:bg-gray-800 bg-gray-800 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                >
+                  {isSaving ? "Menyimpan..." : "Simpan Temuan"}
+                </button>
+              </div>
+            </form>
           </div>
-
-          {selectedDtm.statusDtm === "SUDAH_DITERUSKAN" && (
-            <div className="p-3 border border-amber-200 bg-amber-50 text-amber-900 rounded text-xs">
-              <strong>Info:</strong> DTM ini telah ditandai <strong>Selesai</strong>.
-            </div>
-          )}
-
-          <form onSubmit={handleSaveTemuan} className="space-y-6">
-            {/* KODE TEMUAN */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Kode Temuan <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={temuanFormState.kodeTemuan}
-                onChange={(e) =>
-                  setTemuanFormState({ ...temuanFormState, kodeTemuan: e.target.value })
-                }
-                placeholder="Masukkan kode temuan (e.g., SMAP-01, SMAP-002)"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white text-gray-800"
-              />
-            </div>
-
-            {/* DETAIL TEMUAN (Quill Editor) */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Uraian Temuan (Quill Editor) <span className="text-rose-500">*</span>
-              </label>
-              <QuillEditor
-                value={temuanFormState.detailTemuan}
-                onChange={(opsJson) =>
-                  setTemuanFormState({ ...temuanFormState, detailTemuan: opsJson })
-                }
-                quillInstanceRef={quillRef}
-              />
-              <p className="text-[10px] text-gray-400 mt-2">
-                Gunakan editor di atas untuk menyusun uraian temuan secara rapi (tebal, miring, daftar poin, dsb.).
-              </p>
-            </div>
-
-            {/* FOOTER ACTIONS */}
-            <div className="flex items-center justify-end gap-3 border-t pt-4">
-              <button
-                type="button"
-                onClick={handleBackToList}
-                className="px-4 py-2 border rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-4 py-2 bg-gray-850 hover:bg-gray-800 bg-gray-800 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-              >
-                {isSaving ? "Menyimpan..." : "Simpan Temuan"}
-              </button>
-            </div>
-          </form>
+        ) : null
+      ) : (
+        <div className="flex flex-col items-center justify-center py-24 px-4 text-center bg-white rounded-xl border border-gray-200 shadow-sm animate-fadeIn">
+          <FileEdit className="w-16 h-16 text-gray-300 mb-4 stroke-1" />
+          <h2 className="text-lg font-bold text-gray-800">Kelola Temuan SMM-SMAP</h2>
+          <p className="text-sm text-gray-500 max-w-md mt-2">
+            Silakan pilih unit kerja dan tahun anggaran terlebih dahulu pada dropdown di atas untuk memuat data DTM SMM-SMAP.
+          </p>
         </div>
       )}
     </div>

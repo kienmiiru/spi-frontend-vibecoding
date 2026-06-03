@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import * as docx from "docx-preview";
-import { ArrowLeft, Loader2, FolderKanban, CheckCircle, FileText, ExternalLink, ShieldCheck } from "lucide-react";
+import { Loader2, FolderKanban, CheckCircle } from "lucide-react";
 
-import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
 import BulletedTextArea from "../../components/BulletedTextArea";
 import { apiFetch, apiFetchBlob } from "../../lib/api";
 
 export default function DtmSmmSmap() {
   // Main states
-  const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
   const [dtmList, setDtmList] = useState([]);
   const [viewMode, setViewMode] = useState("list"); // "list" | "detail"
@@ -47,13 +45,27 @@ export default function DtmSmmSmap() {
     setNotification({ message, type });
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   // Load initial faculties and DTM lists
   const loadInitialData = async () => {
     setIsLoading(true);
     try {
       const [fakData, dtmData] = await Promise.all([
         apiFetch("/api/fakultas"),
-        apiFetch(`/api/smm-smap/dtm?tahunAnggaran=${selectedYear}`),
+        apiFetch("/api/smm-smap/dtm"),
       ]);
       setFakultasList(fakData);
       setDtmList(dtmData);
@@ -66,17 +78,13 @@ export default function DtmSmmSmap() {
 
   useEffect(() => {
     loadInitialData();
-  }, [selectedYear]);
-
-  // Helper to find DTM for a fakultasId
-  const findDtm = (fakultasId) => {
-    return dtmList.find((d) => d.fakultasId === fakultasId);
-  };
+  }, []);
 
   // Switch to detail view
-  const handleBukaDtm = (fakultas, dtm) => {
+  const handleBukaDtm = (dtm) => {
     if (!dtm) return;
-    setSelectedFakultas(fakultas);
+    const resolvedFakultas = dtm.fakultas || fakultasList.find((f) => f.id === dtm.fakultasId) || null;
+    setSelectedFakultas(resolvedFakultas);
     setSelectedDtm(dtm);
     setActiveTab("detail");
 
@@ -162,19 +170,21 @@ export default function DtmSmmSmap() {
   };
 
   // Action: Export to DOCX
-  const handleExportDocx = async () => {
-    if (!selectedDtm) return;
+  const handleExportDocx = async (dtm = selectedDtm) => {
+    if (!dtm) return;
     setIsSaving(true);
     try {
+      const unitKerjaName = dtm.fakultas?.namaFakultas || fakultasList.find((f) => f.id === dtm.fakultasId)?.namaFakultas || dtm.inputUnitKerja || "Unit_Kerja";
+      const yearStr = dtm.tahunAnggaran || "";
       const blob = await apiFetchBlob("/api/smm-smap/office/export-docx", {
         method: "POST",
-        body: JSON.stringify({ dtmId: selectedDtm.id }),
+        body: JSON.stringify({ dtmId: dtm.id }),
       });
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `DTM_SMM_SMAP_${selectedFakultas?.namaFakultas || "Unit_Kerja"}_${selectedYear}.docx`;
+      a.download = `DTM_SMM_SMAP_${unitKerjaName}_${yearStr}.docx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -188,13 +198,13 @@ export default function DtmSmmSmap() {
   };
 
   // Action: Preview DOCX
-  const handlePreviewDocx = async () => {
-    if (!selectedDtm) return;
+  const handlePreviewDocx = async (dtm = selectedDtm) => {
+    if (!dtm) return;
     setIsSaving(true);
     try {
       const blob = await apiFetchBlob("/api/smm-smap/office/export-docx", {
         method: "POST",
-        body: JSON.stringify({ dtmId: selectedDtm.id }),
+        body: JSON.stringify({ dtmId: dtm.id }),
       });
       setPreviewBlob(blob);
       setIsPreviewOpen(true);
@@ -237,7 +247,7 @@ export default function DtmSmmSmap() {
     setViewMode("list");
     setSelectedDtm(null);
     setSelectedFakultas(null);
-    loadInitialData(); // Sync list table status
+    loadInitialData(); // Sync list status
   };
 
   return (
@@ -259,27 +269,22 @@ export default function DtmSmmSmap() {
           </h1>
           <p className="text-xs text-gray-500 mt-1">
             {viewMode === "list"
-              ? "Kelola detail monitoring, kriteria audit, dan status persetujuan DTM SMM-SMAP."
-              : `Kelola DTM: ${selectedFakultas?.namaFakultas}`}
+              ? "Daftar monitoring, kriteria audit, dan status persetujuan DTM SMM-SMAP dari seluruh tahun anggaran."
+              : `Kelola DTM: ${selectedFakultas?.namaFakultas || selectedDtm?.inputUnitKerja}`}
           </p>
         </div>
 
-        {viewMode === "list" ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-700">Tahun Anggaran:</span>
-            <YearDropdown value={selectedYear} onChange={setSelectedYear} />
-          </div>
-        ) : (
+        {viewMode !== "list" && (
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePreviewDocx}
+              onClick={() => handlePreviewDocx(selectedDtm)}
               disabled={isSaving}
-              className="px-3 py-1.5 text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-55 rounded disabled:opacity-50 transition-colors"
             >
               Pratinjau
             </button>
             <button
-              onClick={handleExportDocx}
+              onClick={() => handleExportDocx(selectedDtm)}
               disabled={isSaving}
               className="px-3 py-1.5 text-xs font-medium border border-gray-800 bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
             >
@@ -298,7 +303,7 @@ export default function DtmSmmSmap() {
             </button>
             <button
               onClick={handleBackToList}
-              className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-55 transition-colors"
             >
               Kembali
             </button>
@@ -306,78 +311,121 @@ export default function DtmSmmSmap() {
         )}
       </div>
 
-      {/* VIEW MODE: LIST TABLE */}
+      {/* VIEW MODE: LIST CARDS */}
       {viewMode === "list" ? (
-        <div className="border border-gray-300 rounded overflow-hidden bg-white">
-          {isLoading ? (
-            <div className="p-8 text-center text-xs text-gray-500">
-              Memuat data unit kerja...
-            </div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                  <th className="px-6 py-3 border-r border-gray-300">Unit Kerja</th>
-                  <th className="px-6 py-3 text-center border-r border-gray-300 w-64">Status DTM</th>
-                  <th className="px-6 py-3 text-center w-60">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-xs text-gray-800 bg-white">
-                {fakultasList.map((fak) => {
-                  const dtm = findDtm(fak.id);
-                  const isCreated = !!dtm;
+        isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white border border-gray-200 rounded-xl shadow-xs">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="text-sm font-semibold">Memuat berkas DTM SMM-SMAP...</span>
+          </div>
+        ) : dtmList.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+            {dtmList.map((dtm) => {
+              const isCompleted = dtm.statusDtm === "SUDAH_DITERUSKAN";
+              const unitKerjaName = dtm.fakultas?.namaFakultas || fakultasList.find((f) => f.id === dtm.fakultasId)?.namaFakultas || dtm.inputUnitKerja || "Unit Kerja Tidak Diketahui";
+              const shouldUseCreamCard = !isCompleted;
 
-                  return (
-                    <tr key={fak.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-semibold border-r border-gray-300 text-sm text-gray-900">
-                        {fak.namaFakultas}
-                      </td>
+              return (
+                <div
+                  key={dtm.id}
+                  onClick={() => handleBukaDtm(dtm)}
+                  className={`rounded-2xl shadow-sm border p-5 cursor-pointer hover:shadow-md transition ${
+                    shouldUseCreamCard
+                      ? "bg-[#F8EEDF] border-[#e6d6b9]"
+                      : "bg-white border-gray-100"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg"
+                      style={{ backgroundColor: "#5A0D08" }}
+                    >
+                      📋
+                    </div>
+                  </div>
 
-                      {/* STATUS DTM */}
-                      <td className="px-6 py-4 border-r border-gray-300 text-center">
-                        {isCreated ? (
-                          <span
-                            className={`inline-block border px-2.5 py-0.5 rounded text-[10px] font-semibold ${
-                              dtm.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "bg-green-50 border-green-300 text-green-800"
-                                : "bg-gray-50 border-gray-300 text-gray-800"
-                            }`}
-                          >
-                            {dtm.statusDtm === "SUDAH_DITERUSKAN" ? "Selesai" : "Belum Selesai"}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-gray-400 italic">Belum dibuat di Beranda</span>
-                        )}
-                      </td>
+                  {!isCompleted && (
+                    <div className="mb-2">
+                      <span className="inline-flex items-center rounded-full bg-orange-100 text-orange-700 px-2 py-1 text-[11px] font-semibold">
+                        Belum Selesai
+                      </span>
+                    </div>
+                  )}
+                  {isCompleted && (
+                    <div className="mb-2">
+                      <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2 py-1 text-[11px] font-semibold">
+                        Selesai
+                      </span>
+                    </div>
+                  )}
 
-                      {/* ACTIONS */}
-                      <td className="px-6 py-4 text-center">
-                        {isCreated ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleBukaDtm(fak, dtm)}
-                              className="px-3 py-1.5 text-[10px] font-semibold border border-gray-800 bg-white text-gray-800 rounded hover:bg-gray-100 transition-colors"
-                            >
-                              Buka
-                            </button>
-                            <button
-                              onClick={() => handleToggleStatus(dtm)}
-                              className="px-3 py-1.5 text-[10px] font-semibold border border-gray-300 bg-gray-50 text-gray-700 rounded hover:bg-gray-100 transition-colors"
-                            >
-                              Ubah Status
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-gray-400 font-semibold">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                  <h3 className="font-bold text-sm text-gray-800 mb-1">
+                    {unitKerjaName}
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Tahun Anggaran: {dtm.tahunAnggaran}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Tanggal: {formatDate(dtm.tanggalDtm)}
+                  </p>
+
+                  <div className="mt-4 pt-3 border-t border-gray-50 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">
+                        Klik untuk lihat detail
+                      </span>
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: "#5A0D08" }}
+                      >
+                        →
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleToggleStatus(dtm);
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold text-white transition hover:opacity-90"
+                        style={{ backgroundColor: isCompleted ? "#d32f2f" : "#2e7d32" }}
+                      >
+                        {isCompleted ? "Batal Selesai" : "Selesai"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handlePreviewDocx(dtm);
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition border border-gray-200"
+                      >
+                        Pratinjau
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleExportDocx(dtm);
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold text-white transition hover:opacity-90"
+                        style={{ backgroundColor: "#5A0D08" }}
+                      >
+                        Ekspor
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white border border-gray-255 rounded-xl shadow-xs">
+            <FolderKanban className="w-12 h-12 text-gray-300 stroke-1 mb-2" />
+            <span className="text-xs font-semibold text-gray-400">Belum ada data DTM SMM-SMAP yang dibuat.</span>
+          </div>
+        )
       ) : (
         /* DETAIL WORKSPACE */
         <div className="space-y-6">
@@ -618,7 +666,7 @@ export default function DtmSmmSmap() {
                   setIsPreviewOpen(false);
                   setPreviewBlob(null);
                 }}
-                className="text-xs font-semibold text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="text-xs font-semibold text-gray-500 hover:text-gray-750 focus:outline-none"
               >
                 Tutup
               </button>
