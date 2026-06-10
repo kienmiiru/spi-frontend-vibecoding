@@ -307,8 +307,8 @@ export default function JamKerjaSdm() {
                                   }`}
                                 ></span>
                                 {dtm.statusDtm === "SUDAH_DITERUSKAN"
-                                  ? "Sudah Diteruskan (Selesai)"
-                                  : "Belum Diteruskan"}
+                                  ? "Sudah Ditandai Selesai"
+                                  : "Belum Ditandai Selesai"}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">

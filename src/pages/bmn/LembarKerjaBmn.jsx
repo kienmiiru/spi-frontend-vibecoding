@@ -133,11 +133,11 @@ export default function LembarKerjaBmn() {
       const updated = await apiFetch(`/api/bmn/sampling/${selectedSampling.id}/status`, {
         method: "PATCH",
         body: JSON.stringify({
-          kondisiBarang: formState.kondisiBarang || null,
+          kondisiBarang: formState.kondisiBarang || "",
           lokasiPenempatan: formState.lokasiPenempatan || "",
-          penggunaan: formState.penggunaan || null,
-          pengguna: formState.pengguna || null,
-          labelBarang: formState.labelBarang || null,
+          penggunaan: formState.penggunaan || "",
+          pengguna: formState.pengguna || "",
+          labelBarang: formState.labelBarang || "",
           keteranganTambahan: formState.keteranganTambahan || ""
         })
       });

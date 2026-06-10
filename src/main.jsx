@@ -8,7 +8,7 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/spi-frontend-vibecoding">
       <AuthProvider>
         <ConfirmProvider>
           <App />

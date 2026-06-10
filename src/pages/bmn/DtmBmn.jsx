@@ -47,6 +47,9 @@ export default function DtmBmn() {
     inputAkibat: "",
     inputRekomendasi: "",
     kriteria: "",
+    inputKetuaAuditor: "",
+    inputKetuaSpi: "",
+    inputPimpinanAuditi: "",
   });
 
   // Preview state for docx-preview
@@ -128,6 +131,9 @@ export default function DtmBmn() {
       inputAkibat: dtm.inputAkibat || "",
       inputRekomendasi: dtm.inputRekomendasi || "",
       kriteria: dtm.kriteria || "",
+      inputKetuaAuditor: dtm.inputKetuaAuditor || "",
+      inputKetuaSpi: dtm.inputKetuaSpi || "",
+      inputPimpinanAuditi: dtm.inputPimpinanAuditi || "",
     });
 
     try {
@@ -312,13 +318,16 @@ export default function DtmBmn() {
       const updated = await apiFetch(`/api/bmn/dtm/${selectedDtm.id}/detail`, {
         method: "PATCH",
         body: JSON.stringify({
-          inputAspekMonitoring: detailFormState.inputAspekMonitoring || null,
-          inputAuditor: detailFormState.inputAuditor || null,
+          inputAspekMonitoring: detailFormState.inputAspekMonitoring || "",
+          inputAuditor: detailFormState.inputAuditor || "",
           tipeMonitoring: detailFormState.tipeMonitoring || "POST",
-          inputAkarPenyebab: detailFormState.inputAkarPenyebab || null,
-          inputAkibat: detailFormState.inputAkibat || null,
-          inputRekomendasi: detailFormState.inputRekomendasi || null,
-          kriteria: detailFormState.kriteria || null,
+          inputAkarPenyebab: detailFormState.inputAkarPenyebab || "",
+          inputAkibat: detailFormState.inputAkibat || "",
+          inputRekomendasi: detailFormState.inputRekomendasi || "",
+          kriteria: detailFormState.kriteria || "",
+          inputKetuaAuditor: detailFormState.inputKetuaAuditor || "",
+          inputKetuaSpi: detailFormState.inputKetuaSpi || "",
+          inputPimpinanAuditi: detailFormState.inputPimpinanAuditi || "",
         }),
       });
       setSelectedDtm(updated);

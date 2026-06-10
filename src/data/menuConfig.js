@@ -62,6 +62,11 @@ export const menuByRole = {
       icon: FileText,
       path: "/pbj/peraturan",
     },
+    {
+      label: "Berita Acara",
+      icon: FileText,
+      path: "/pbj/berita-acara",
+    },
   ],
 
   BMN: [
@@ -92,6 +97,11 @@ export const menuByRole = {
       icon: FileText,
       path: "/bmn/peraturan",
     },
+    {
+      label: "Berita Acara",
+      icon: FileText,
+      path: "/bmn/berita-acara",
+    },
   ],
 
   'SMM_SMAP': [
@@ -116,6 +126,11 @@ export const menuByRole = {
       icon: FileText,
       path: "/smm-smap/peraturan",
     },
+    {
+      label: "Berita Acara",
+      icon: FileText,
+      path: "/smm-smap/berita-acara",
+    },
   ],
 
   SDM: [
@@ -139,6 +154,11 @@ export const menuByRole = {
       label: "Peraturan",
       icon: FileText,
       path: "/sdm/peraturan",
+    },
+    {
+      label: "Berita Acara",
+      icon: FileText,
+      path: "/sdm/berita-acara",
     },
   ],
 };

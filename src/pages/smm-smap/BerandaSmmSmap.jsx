@@ -19,7 +19,13 @@ export default function BerandaSmmSmap() {
 
   // Form states for temuan
   const [temuanFormState, setTemuanFormState] = useState({
-    detailTemuan: "",
+    detailTemuan1: "",
+    detailTemuan2: "",
+    detailTemuan3: "",
+    detailTemuan4: "",
+    detailTemuan5: "",
+    detailTemuan6: "",
+    detailTemuan7: "",
     kodeTemuan: "",
   });
 
@@ -73,8 +79,31 @@ export default function BerandaSmmSmap() {
         })
       });
       setSelectedDtm(dtm);
+      let detail1 = "";
+      let detail2 = "";
+      let detail3 = "";
+      let detail4 = "";
+      let detail5 = "";
+      let detail6 = "";
+      let detail7 = "";
+      if (dtm.detailTemuan) {
+        const lines = dtm.detailTemuan.split('\n');
+        detail1 = lines[0] || "";
+        detail2 = lines[1] || "";
+        detail3 = lines[2] || "";
+        detail4 = lines[3] || "";
+        detail5 = lines[4] || "";
+        detail6 = lines[5] || "";
+        detail7 = lines[6] || "";
+      }
       setTemuanFormState({
-        detailTemuan: dtm.detailTemuan || "",
+        detailTemuan1: detail1,
+        detailTemuan2: detail2,
+        detailTemuan3: detail3,
+        detailTemuan4: detail4,
+        detailTemuan5: detail5,
+        detailTemuan6: detail6,
+        detailTemuan7: detail7,
         kodeTemuan: dtm.kodeTemuan || "",
       });
       setViewMode("edit");
@@ -90,12 +119,22 @@ export default function BerandaSmmSmap() {
     e.preventDefault();
     if (!selectedDtm) return;
 
+    const combinedDetailTemuan = [
+      temuanFormState.detailTemuan1 || "",
+      temuanFormState.detailTemuan2 || "",
+      temuanFormState.detailTemuan3 || "",
+      temuanFormState.detailTemuan4 || "",
+      temuanFormState.detailTemuan5 || "",
+      temuanFormState.detailTemuan6 || "",
+      temuanFormState.detailTemuan7 || "",
+    ].join('\n');
+
     setIsSaving(true);
     try {
       const updated = await apiFetch(`/api/smm-smap/dtm/${selectedDtm.id}/temuan`, {
         method: "PATCH",
         body: JSON.stringify({
-          detailTemuan: temuanFormState.detailTemuan,
+          detailTemuan: combinedDetailTemuan,
           kodeTemuan: temuanFormState.kodeTemuan,
         }),
       });
@@ -123,17 +162,23 @@ export default function BerandaSmmSmap() {
   const isTemuanFilled = (dtm) => {
     if (!dtm || !dtm.detailTemuan) return false;
     try {
-      // Check if it's Quill JSON operations
-      const parsed = JSON.parse(dtm.detailTemuan);
-      const ops = parsed.ops || parsed;
-      if (Array.isArray(ops)) {
-        return ops.some(op => op.insert && op.insert.trim().length > 0);
-      }
+      const lines = dtm.detailTemuan.split('\n');
+      return lines.some(line => {
+        if (!line.trim()) return false;
+        try {
+          const parsed = JSON.parse(line);
+          const ops = parsed.ops || parsed;
+          if (Array.isArray(ops)) {
+            return ops.some(op => op.insert && op.insert.trim().length > 0);
+          }
+        } catch (_) {
+          return line.trim().length > 0;
+        }
+        return false;
+      });
     } catch (_) {
-      // Fallback plain string check
       return dtm.detailTemuan.trim().length > 0;
     }
-    return false;
   };
 
   return (
@@ -298,11 +343,10 @@ export default function BerandaSmmSmap() {
             {/* KODE TEMUAN */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Kode Temuan <span className="text-rose-500">*</span>
+                Kode Temuan
               </label>
               <input
                 type="text"
-                required
                 value={temuanFormState.kodeTemuan}
                 onChange={(e) =>
                   setTemuanFormState({ ...temuanFormState, kodeTemuan: e.target.value })
@@ -312,21 +356,103 @@ export default function BerandaSmmSmap() {
               />
             </div>
 
-            {/* DETAIL TEMUAN (Quill Editor) */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Uraian Temuan (Quill Editor) <span className="text-rose-500">*</span>
-              </label>
-              <QuillEditor
-                value={temuanFormState.detailTemuan}
-                onChange={(opsJson) =>
-                  setTemuanFormState({ ...temuanFormState, detailTemuan: opsJson })
-                }
-                quillInstanceRef={quillRef}
-              />
-              <p className="text-[10px] text-gray-400 mt-2">
-                Gunakan editor di atas untuk menyusun uraian temuan secara rapi (tebal, miring, daftar poin, dsb.).
-              </p>
+            {/* DETAIL TEMUAN (7 Quill Editors) */}
+            <div className="space-y-6">
+              {/* SECTION 1: SPIP */}
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+                <label className="block text-xs font-bold text-gray-800 mb-2">
+                  Sistem Pengendalian Intern Pemerintah (SPIP)
+                </label>
+                <QuillEditor
+                  value={temuanFormState.detailTemuan1}
+                  onChange={(opsJson) =>
+                    setTemuanFormState((prev) => ({ ...prev, detailTemuan1: opsJson }))
+                  }
+                />
+              </div>
+
+              {/* SECTION 2: ZI WBK/WBBM */}
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50 space-y-4">
+                <div className="border-b border-gray-200 pb-2 mb-2">
+                  <h3 className="text-xs font-bold text-indigo-900">
+                    Zona Integritas menuju Wilayah Bebas Korupsi / Wilayah Birokrasi Bersih Melayani (ZI WBK/WBBM)
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      I. Manajemen Perubahan
+                    </label>
+                    <QuillEditor
+                      value={temuanFormState.detailTemuan2}
+                      onChange={(opsJson) =>
+                        setTemuanFormState((prev) => ({ ...prev, detailTemuan2: opsJson }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      II. Penataan Tatalaksana
+                    </label>
+                    <QuillEditor
+                      value={temuanFormState.detailTemuan3}
+                      onChange={(opsJson) =>
+                        setTemuanFormState((prev) => ({ ...prev, detailTemuan3: opsJson }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      III. Penataan Sistem Manajemen SDM
+                    </label>
+                    <QuillEditor
+                      value={temuanFormState.detailTemuan4}
+                      onChange={(opsJson) =>
+                        setTemuanFormState((prev) => ({ ...prev, detailTemuan4: opsJson }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      IV. Penguatan Akuntabilitas
+                    </label>
+                    <QuillEditor
+                      value={temuanFormState.detailTemuan5}
+                      onChange={(opsJson) =>
+                        setTemuanFormState((prev) => ({ ...prev, detailTemuan5: opsJson }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      V. Penguatan Pengawasan
+                    </label>
+                    <QuillEditor
+                      value={temuanFormState.detailTemuan6}
+                      onChange={(opsJson) =>
+                        setTemuanFormState((prev) => ({ ...prev, detailTemuan6: opsJson }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      VI. Peningkatan Kualitas Pelayanan Publik
+                    </label>
+                    <QuillEditor
+                      value={temuanFormState.detailTemuan7}
+                      onChange={(opsJson) =>
+                        setTemuanFormState((prev) => ({ ...prev, detailTemuan7: opsJson }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* FOOTER ACTIONS */}

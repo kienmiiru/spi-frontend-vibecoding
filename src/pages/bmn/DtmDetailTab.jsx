@@ -14,18 +14,18 @@ export default function DtmDetailTab({
 
       <form onSubmit={handleSaveDetails} className="space-y-4 max-w-3xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* AUDITOR */}
+          {/* ASPEK MONITORING */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Nama Auditor
+              Aspek Monitoring
             </label>
             <input
               type="text"
-              value={detailFormState.inputAuditor || ""}
+              value={detailFormState.inputAspekMonitoring || ""}
               onChange={(e) =>
-                setDetailFormState({ ...detailFormState, inputAuditor: e.target.value })
+                setDetailFormState({ ...detailFormState, inputAspekMonitoring: e.target.value })
               }
-              placeholder="Masukkan nama auditor..."
+              placeholder="Masukkan aspek monitoring..."
               className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
             />
           </div>
@@ -49,19 +49,65 @@ export default function DtmDetailTab({
           </div>
         </div>
 
-        {/* ASPEK MONITORING */}
-        <div>
+        {/* TIM & PIMPINAN DTM */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 pt-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Ketua Auditor
+            </label>
+            <input
+              type="text"
+              value={detailFormState.inputKetuaAuditor || ""}
+              onChange={(e) =>
+                setDetailFormState({ ...detailFormState, inputKetuaAuditor: e.target.value })
+              }
+              placeholder="Masukkan nama ketua auditor..."
+              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Ketua SPI
+            </label>
+            <input
+              type="text"
+              value={detailFormState.inputKetuaSpi || ""}
+              onChange={(e) =>
+                setDetailFormState({ ...detailFormState, inputKetuaSpi: e.target.value })
+              }
+              placeholder="Masukkan nama ketua SPI..."
+              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              Pimpinan Auditi
+            </label>
+            <input
+              type="text"
+              value={detailFormState.inputPimpinanAuditi || ""}
+              onChange={(e) =>
+                setDetailFormState({ ...detailFormState, inputPimpinanAuditi: e.target.value })
+              }
+              placeholder="Masukkan nama pimpinan auditi..."
+              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+            />
+          </div>
+        </div>
+
+        {/* NAMA-NAMA AUDITOR */}
+        <div className="border-t border-gray-100 pt-4">
           <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Aspek Monitoring
+            Nama Auditor (Satu per baris)
           </label>
-          <input
-            type="text"
-            value={detailFormState.inputAspekMonitoring || ""}
-            onChange={(e) =>
-              setDetailFormState({ ...detailFormState, inputAspekMonitoring: e.target.value })
+          <BulletedTextArea
+            value={detailFormState.inputAuditor || ""}
+            onChange={(val) =>
+              setDetailFormState({ ...detailFormState, inputAuditor: val })
             }
-            placeholder="Masukkan aspek monitoring..."
-            className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+            placeholder="Tulis nama-nama auditor, satu per baris..."
           />
         </div>
 

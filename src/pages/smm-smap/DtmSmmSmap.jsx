@@ -31,6 +31,9 @@ export default function DtmSmmSmap() {
     inputUnitKerja: "",
     inputMasaMonitoring: "",
     inputTanggalMonitoring: "",
+    inputKetuaAuditor: "",
+    inputKetuaSpi: "",
+    inputPimpinanAuditi: "",
   });
 
   // Preview state for docx-preview
@@ -92,6 +95,9 @@ export default function DtmSmmSmap() {
       inputUnitKerja: dtm.inputUnitKerja || "",
       inputMasaMonitoring: dtm.inputMasaMonitoring || "",
       inputTanggalMonitoring: dtm.inputTanggalMonitoring || "",
+      inputKetuaAuditor: dtm.inputKetuaAuditor || "",
+      inputKetuaSpi: dtm.inputKetuaSpi || "",
+      inputPimpinanAuditi: dtm.inputPimpinanAuditi || "",
     });
 
     setViewMode("detail");
@@ -140,16 +146,19 @@ export default function DtmSmmSmap() {
       const updated = await apiFetch(`/api/smm-smap/dtm/${selectedDtm.id}/detail`, {
         method: "PATCH",
         body: JSON.stringify({
-          inputAspekMonitoring: detailFormState.inputAspekMonitoring || null,
-          inputAuditor: detailFormState.inputAuditor || null,
+          inputAspekMonitoring: detailFormState.inputAspekMonitoring || "",
+          inputAuditor: detailFormState.inputAuditor || "",
           tipeMonitoring: detailFormState.tipeMonitoring || "POST",
-          inputAkarPenyebab: detailFormState.inputAkarPenyebab || null,
-          inputAkibat: detailFormState.inputAkibat || null,
-          inputRekomendasi: detailFormState.inputRekomendasi || null,
-          kriteria: detailFormState.kriteria || null,
-          inputUnitKerja: detailFormState.inputUnitKerja || null,
-          inputMasaMonitoring: detailFormState.inputMasaMonitoring || null,
-          inputTanggalMonitoring: detailFormState.inputTanggalMonitoring || null,
+          inputAkarPenyebab: detailFormState.inputAkarPenyebab || "",
+          inputAkibat: detailFormState.inputAkibat || "",
+          inputRekomendasi: detailFormState.inputRekomendasi || "",
+          kriteria: detailFormState.kriteria || "",
+          inputUnitKerja: detailFormState.inputUnitKerja || "",
+          inputMasaMonitoring: detailFormState.inputMasaMonitoring || "",
+          inputTanggalMonitoring: detailFormState.inputTanggalMonitoring || "",
+          inputKetuaAuditor: detailFormState.inputKetuaAuditor || "",
+          inputKetuaSpi: detailFormState.inputKetuaSpi || "",
+          inputPimpinanAuditi: detailFormState.inputPimpinanAuditi || "",
         }),
       });
       setSelectedDtm(updated);
@@ -413,19 +422,19 @@ export default function DtmSmmSmap() {
               </h2>
 
               <form onSubmit={handleSaveDetails} className="space-y-4 max-w-4xl">
-                {/* ROW 1: AUDITOR & TIPE MONITORING */}
+                {/* ROW 1: ASPEK MONITORING & TIPE MONITORING */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Nama Auditor
+                      Aspek Monitoring
                     </label>
                     <input
                       type="text"
-                      value={detailFormState.inputAuditor || ""}
+                      value={detailFormState.inputAspekMonitoring || ""}
                       onChange={(e) =>
-                        setDetailFormState({ ...detailFormState, inputAuditor: e.target.value })
+                        setDetailFormState({ ...detailFormState, inputAspekMonitoring: e.target.value })
                       }
-                      placeholder="Masukkan nama auditor..."
+                      placeholder="Masukkan aspek monitoring..."
                       className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
                     />
                   </div>
@@ -448,23 +457,8 @@ export default function DtmSmmSmap() {
                   </div>
                 </div>
 
-                {/* ROW 2: ASPEK MONITORING & UNIT KERJA AUDIT */}
+                {/* ROW 2: UNIT KERJA AUDIT & MASA MONITORING */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Aspek Monitoring
-                    </label>
-                    <input
-                      type="text"
-                      value={detailFormState.inputAspekMonitoring || ""}
-                      onChange={(e) =>
-                        setDetailFormState({ ...detailFormState, inputAspekMonitoring: e.target.value })
-                      }
-                      placeholder="Masukkan aspek monitoring..."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
-                    />
-                  </div>
-
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Unit Kerja Yang Diaudit
@@ -479,10 +473,7 @@ export default function DtmSmmSmap() {
                       className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
                     />
                   </div>
-                </div>
 
-                {/* ROW 3: MASA MONITORING & TANGGAL MONITORING */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Masa Monitoring
@@ -497,7 +488,10 @@ export default function DtmSmmSmap() {
                       className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
                     />
                   </div>
+                </div>
 
+                {/* ROW 3: TANGGAL MONITORING */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Tanggal Monitoring
@@ -511,6 +505,68 @@ export default function DtmSmmSmap() {
                       className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white text-gray-800"
                     />
                   </div>
+                </div>
+
+                {/* TIM & PIMPINAN DTM */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-150 pt-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Ketua Auditor
+                    </label>
+                    <input
+                      type="text"
+                      value={detailFormState.inputKetuaAuditor || ""}
+                      onChange={(e) =>
+                        setDetailFormState({ ...detailFormState, inputKetuaAuditor: e.target.value })
+                      }
+                      placeholder="Masukkan nama ketua auditor..."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Ketua SPI
+                    </label>
+                    <input
+                      type="text"
+                      value={detailFormState.inputKetuaSpi || ""}
+                      onChange={(e) =>
+                        setDetailFormState({ ...detailFormState, inputKetuaSpi: e.target.value })
+                      }
+                      placeholder="Masukkan nama ketua SPI..."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Pimpinan Auditi
+                    </label>
+                    <input
+                      type="text"
+                      value={detailFormState.inputPimpinanAuditi || ""}
+                      onChange={(e) =>
+                        setDetailFormState({ ...detailFormState, inputPimpinanAuditi: e.target.value })
+                      }
+                      placeholder="Masukkan nama pimpinan auditi..."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gray-500 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* NAMA-NAMA AUDITOR */}
+                <div className="border-t border-gray-150 pt-4">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Nama Auditor (Satu per baris)
+                  </label>
+                  <BulletedTextArea
+                    value={detailFormState.inputAuditor || ""}
+                    onChange={(val) =>
+                      setDetailFormState({ ...detailFormState, inputAuditor: val })
+                    }
+                    placeholder="Tulis nama-nama auditor, satu per baris..."
+                  />
                 </div>
 
                 {/* LIST FIELDS: AKAR PENYEBAB, AKIBAT, REKOMENDASI (BulletedTextArea) */}
