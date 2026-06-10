@@ -1,0 +1,14 @@
+diff --git a/node_modules/docx-preview/dist/docx-preview.mjs b/node_modules/docx-preview/dist/docx-preview.mjs
+index 2691670..2cf8e9a 100644
+--- a/node_modules/docx-preview/dist/docx-preview.mjs
++++ b/node_modules/docx-preview/dist/docx-preview.mjs
+@@ -2287,6 +2287,9 @@ class DocumentParser {
+                 case "tcPr":
+                     this.parseTableCellProperties(c, result);
+                     break;
++                case "altChunk":
++                    result.children.push(this.parseAltChunk(c));
++                    break;
+             }
+         }
+         return result;
