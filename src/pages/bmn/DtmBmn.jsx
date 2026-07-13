@@ -3,6 +3,7 @@ import * as docx from "docx-preview";
 
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
+import Table from "../../components/Table";
 import { apiFetch, apiFetchBlob } from "../../lib/api";
 
 // Import modular tab components
@@ -10,8 +11,10 @@ import DtmTemuanTab from "./DtmTemuanTab";
 import DtmLampiranTab from "./DtmLampiranTab";
 import DtmDetailTab from "./DtmDetailTab";
 import DtmKriteriaTab from "./DtmKriteriaTab";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function DtmBmn() {
+  const confirm = useConfirm();
   // Main states
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
@@ -65,6 +68,13 @@ export default function DtmBmn() {
   const quillRef = useRef(null);
 
   const showNotification = (message, type = "success") => {
+    if (type === "success") {
+      return confirm({
+        title: "",
+        message,
+        type: "info"
+      });
+    }
     setNotification({ message, type });
   };
 
@@ -165,7 +175,11 @@ export default function DtmBmn() {
         body: JSON.stringify({ statusDtm: nextStatus }),
       });
 
-      showNotification(`Status DTM berhasil diubah menjadi ${nextStatus === "SUDAH_DITERUSKAN" ? "Sudah Selesai" : "Belum Selesai"}`);
+      confirm({
+        title: "",
+        message: `Status DTM berhasil diubah menjadi ${nextStatus === "SUDAH_DITERUSKAN" ? "Sudah Selesai" : "Belum Selesai"}`,
+        type: "info"
+      });
 
       // Update selected state if currently in detail view
       if (selectedDtm && selectedDtm.id === dtm.id) {
@@ -197,7 +211,11 @@ export default function DtmBmn() {
         }),
       });
       setSelectedDtm(updated);
-      showNotification("Data temuan dan kode temuan berhasil disimpan");
+      confirm({
+        title: "",
+        message: "Data temuan dan kode temuan berhasil disimpan",
+        type: "info"
+      });
     } catch (err) {
       showNotification("Gagal menyimpan temuan: " + err.message, "error");
     } finally {
@@ -224,7 +242,7 @@ export default function DtmBmn() {
       const position = range ? range.index : quill.getLength() - 1;
 
       // Insert new text on a new paragraph/newline
-      quill.insertText(position, `\n${insertText}\n`);
+      quill.insertText(position, `${insertText}\n`);
       const delta = quill.getContents();
       setTemuanFormState((prev) => ({
         ...prev,
@@ -294,7 +312,15 @@ export default function DtmBmn() {
 
   // Tab 2b: Delete lampiran
   const handleDeleteLampiran = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus lampiran ini?")) return;
+    const confirmed = await confirm({
+      title: "",
+      message: "Apakah Anda yakin ingin menghapus lampiran ini?",
+      confirmText: "Hapus",
+      cancelText: "Batal",
+      type: "danger"
+    });
+    if (!confirmed) return;
+
     setIsSaving(true);
     try {
       await apiFetch(`/api/bmn/lampiran/${id}`, {
@@ -331,7 +357,11 @@ export default function DtmBmn() {
         }),
       });
       setSelectedDtm(updated);
-      showNotification("Detail DTM berhasil diperbarui");
+      confirm({
+        title: "",
+        message: "Detail DTM berhasil diperbarui",
+        type: "info"
+      });
     } catch (err) {
       showNotification("Gagal memperbarui detail DTM: " + err.message, "error");
     } finally {
@@ -376,7 +406,6 @@ export default function DtmBmn() {
       });
       setPreviewBlob(blob);
       setIsPreviewOpen(true);
-      showNotification("Pratinjau dokumen siap ditampilkan");
     } catch (err) {
       showNotification("Gagal memuat pratinjau dokumen: " + err.message, "error");
     } finally {
@@ -500,46 +529,45 @@ export default function DtmBmn() {
 
       {/* VIEW MODE: LIST TABLE (Skeleton / Kerangka) */}
       {viewMode === "list" ? (
-        <div className="border border-gray-300 rounded overflow-hidden bg-white">
+        <div>
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-gray-500">
+            <div className="p-8 text-center text-xs text-gray-500 border border-gray-300 bg-white">
               Memuat data unit kerja...
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                  <th className="px-4 py-2 border-r border-gray-300">Nama Unit Kerja</th>
-                  <th className="px-4 py-2 text-center border-r border-gray-300">Barang Persediaan</th>
-                  <th className="px-4 py-2 text-center border-r border-gray-300">Pembelian Aset</th>
-                  <th className="px-4 py-2 text-center">Gabungan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-xs text-gray-800">
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Nama Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Barang Persediaan</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Pembelian Aset</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Gabungan</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {fakultasList.map((fak) => {
                   const dtmPersediaan = findDtm(fak.id, "BARANG_PERSEDIAAN");
                   const dtmPembelian = findDtm(fak.id, "PEMBELIAN_ASET");
                   const dtmGabungan = findDtm(fak.id, "GABUNGAN");
 
                   return (
-                    <tr key={fak.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-semibold border-r border-gray-300">
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold">
                         {fak.namaFakultas}
-                      </td>
+                      </Table.Cell>
 
                       {/* TIPE 1: BARANG PERSEDIAAN */}
-                      <td className="px-4 py-3 border-r border-gray-300 text-center">
+                      <Table.Cell className="text-center">
                         {dtmPersediaan ? (
                           <div className="flex flex-col items-center gap-1.5">
                             <span
-                              className={`inline-block border px-2 py-0.5 rounded text-[10px] ${dtmPersediaan.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "bg-green-50 border-green-300 text-green-800"
-                                : "bg-gray-50 border-gray-300 text-gray-800"
-                                }`}
+                              className={`inline-block border px-2 py-0.5 rounded text-[10px] ${
+                                dtmPersediaan.statusDtm === "SUDAH_DITERUSKAN"
+                                  ? "bg-green-50 border-green-300 text-green-800"
+                                  : "bg-gray-50 border-gray-300 text-gray-800"
+                              }`}
                             >
-                              {dtmPersediaan.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "Selesai"
-                                : "Belum Selesai"}
+                              {dtmPersediaan.statusDtm === "SUDAH_DITERUSKAN" ? "Selesai" : "Belum Selesai"}
                             </span>
                             <div className="flex items-center gap-1">
                               <button
@@ -557,23 +585,22 @@ export default function DtmBmn() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-gray-400 italic">Belum dibuat di LK</span>
+                          <span className="text-[10px] text-gray-400 italic">Belum dibuat</span>
                         )}
-                      </td>
+                      </Table.Cell>
 
                       {/* TIPE 2: PEMBELIAN ASET */}
-                      <td className="px-4 py-3 border-r border-gray-300 text-center">
+                      <Table.Cell className="text-center">
                         {dtmPembelian ? (
                           <div className="flex flex-col items-center gap-1.5">
                             <span
-                              className={`inline-block border px-2 py-0.5 rounded text-[10px] ${dtmPembelian.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "bg-green-50 border-green-300 text-green-800"
-                                : "bg-gray-50 border-gray-300 text-gray-800"
-                                }`}
+                              className={`inline-block border px-2 py-0.5 rounded text-[10px] ${
+                                dtmPembelian.statusDtm === "SUDAH_DITERUSKAN"
+                                  ? "bg-green-50 border-green-300 text-green-800"
+                                  : "bg-gray-50 border-gray-300 text-gray-800"
+                              }`}
                             >
-                              {dtmPembelian.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "Selesai"
-                                : "Belum Selesai"}
+                              {dtmPembelian.statusDtm === "SUDAH_DITERUSKAN" ? "Selesai" : "Belum Selesai"}
                             </span>
                             <div className="flex items-center gap-1">
                               <button
@@ -591,23 +618,22 @@ export default function DtmBmn() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-gray-400 italic">Belum dibuat di LK</span>
+                          <span className="text-[10px] text-gray-400 italic">Belum dibuat</span>
                         )}
-                      </td>
+                      </Table.Cell>
 
                       {/* TIPE 3: GABUNGAN */}
-                      <td className="px-4 py-3 text-center">
+                      <Table.Cell className="text-center">
                         {dtmGabungan ? (
                           <div className="flex flex-col items-center gap-1.5">
                             <span
-                              className={`inline-block border px-2 py-0.5 rounded text-[10px] ${dtmGabungan.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "bg-green-50 border-green-300 text-green-800"
-                                : "bg-gray-50 border-gray-300 text-gray-800"
-                                }`}
+                              className={`inline-block border px-2 py-0.5 rounded text-[10px] ${
+                                dtmGabungan.statusDtm === "SUDAH_DITERUSKAN"
+                                  ? "bg-green-50 border-green-300 text-green-800"
+                                  : "bg-gray-50 border-gray-300 text-gray-800"
+                              }`}
                             >
-                              {dtmGabungan.statusDtm === "SUDAH_DITERUSKAN"
-                                ? "Selesai"
-                                : "Belum Selesai"}
+                              {dtmGabungan.statusDtm === "SUDAH_DITERUSKAN" ? "Selesai" : "Belum Selesai"}
                             </span>
                             <div className="flex items-center gap-1">
                               <button
@@ -625,14 +651,14 @@ export default function DtmBmn() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-gray-400 italic">Belum dibuat di LK</span>
+                          <span className="text-[10px] text-gray-400 italic">Belum dibuat</span>
                         )}
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   );
                 })}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           )}
         </div>
       ) : (
@@ -746,7 +772,7 @@ export default function DtmBmn() {
             <div className="flex-1 overflow-auto p-6 bg-gray-100 flex justify-center">
               <div
                 ref={previewContainerRef}
-                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px]"
+                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px] h-fit"
               />
             </div>
           </div>

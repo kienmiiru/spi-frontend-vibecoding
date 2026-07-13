@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
+import Table from "../../components/Table";
 import { apiFetch } from "../../lib/api";
 import { useConfirm } from "../../context/ConfirmContext";
 import {
@@ -222,9 +223,9 @@ export default function BerandaBmn() {
   // 6. Delete Sampling
   const handleDeleteSampling = async (id) => {
     const confirmed = await confirm({
-      title: "Hapus Barang Sampling",
-      message: "Apakah Anda yakin ingin menghapus barang sampling ini? Tindakan ini tidak dapat dibatalkan.",
-      confirmText: "Ya, Hapus",
+      title: "",
+      message: "Apakah Anda yakin ingin menghapus barang sampling ini?",
+      confirmText: "Hapus",
       cancelText: "Batal",
       type: "danger"
     });
@@ -295,112 +296,110 @@ export default function BerandaBmn() {
 
       {/* MAIN VIEW: LIST MODE */}
       {viewMode === "list" && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500">
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white border border-gray-300">
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
               <span className="text-sm font-medium">Memuat data unit kerja...</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
-                    <th className="px-6 py-4">Unit Kerja</th>
-                    <th className="px-6 py-4 text-center">Barang Persediaan</th>
-                    <th className="px-6 py-4 text-center">Pembelian Aset</th>
-                    <th className="px-6 py-4 text-center">Gabungan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
-                  {fakultasList.map((fak) => {
-                    const dtmPersediaan = findDtm(fak.id, "BARANG_PERSEDIAAN");
-                    const dtmPembelian = findDtm(fak.id, "PEMBELIAN_ASET");
-                    const dtmGabungan = findDtm(fak.id, "GABUNGAN");
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Barang Persediaan</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Pembelian Aset</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Gabungan</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {fakultasList.map((fak) => {
+                  const dtmPersediaan = findDtm(fak.id, "BARANG_PERSEDIAAN");
+                  const dtmPembelian = findDtm(fak.id, "PEMBELIAN_ASET");
+                  const dtmGabungan = findDtm(fak.id, "GABUNGAN");
 
-                    return (
-                      <tr key={fak.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-gray-800">
-                          {fak.namaFakultas}
-                        </td>
+                  return (
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold text-gray-800">
+                        {fak.namaFakultas}
+                      </Table.Cell>
 
-                        {/* 1. BARANG PERSEDIAAN */}
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col items-center gap-2">
-                            {dtmPersediaan?.linkPdf ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Ada PDF
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Belum Upload
-                              </span>
-                            )}
-                            <button
-                              disabled={isSaving}
-                              onClick={() => handleDtmAction(fak, "BARANG_PERSEDIAAN")}
-                              className="px-3 py-1.5 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
-                            >
-                              Buka
-                            </button>
-                          </div>
-                        </td>
+                      {/* 1. BARANG PERSEDIAAN */}
+                      <Table.Cell>
+                        <div className="flex flex-col items-center gap-2">
+                          {dtmPersediaan?.linkPdf ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Ada PDF
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                              Belum Upload
+                            </span>
+                          )}
+                          <button
+                            disabled={isSaving}
+                            onClick={() => handleDtmAction(fak, "BARANG_PERSEDIAAN")}
+                            className="px-3 py-1.5 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                          >
+                            Buka
+                          </button>
+                        </div>
+                      </Table.Cell>
 
-                        {/* 2. PEMBELIAN ASET */}
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col items-center gap-2">
-                            {dtmPembelian?.linkPdf ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Ada PDF
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Belum Upload
-                              </span>
-                            )}
-                            <button
-                              disabled={isSaving}
-                              onClick={() => handleDtmAction(fak, "PEMBELIAN_ASET")}
-                              className="px-3 py-1.5 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
-                            >
-                              Buka
-                            </button>
-                          </div>
-                        </td>
+                      {/* 2. PEMBELIAN ASET */}
+                      <Table.Cell>
+                        <div className="flex flex-col items-center gap-2">
+                          {dtmPembelian?.linkPdf ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Ada PDF
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                              Belum Upload
+                            </span>
+                          )}
+                          <button
+                            disabled={isSaving}
+                            onClick={() => handleDtmAction(fak, "PEMBELIAN_ASET")}
+                            className="px-3 py-1.5 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                          >
+                            Buka
+                          </button>
+                        </div>
+                      </Table.Cell>
 
-                        {/* 3. GABUNGAN */}
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col items-center gap-2">
-                            {dtmGabungan?.linkPdf ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Ada PDF
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Belum Upload
-                              </span>
-                            )}
-                            <button
-                              disabled={isSaving}
-                              onClick={() => handleDtmAction(fak, "GABUNGAN")}
-                              className="px-3 py-1.5 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
-                            >
-                              Buka
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      {/* 3. GABUNGAN */}
+                      <Table.Cell>
+                        <div className="flex flex-col items-center gap-2">
+                          {dtmGabungan?.linkPdf ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Ada PDF
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                              Belum Upload
+                            </span>
+                          )}
+                          <button
+                            disabled={isSaving}
+                            onClick={() => handleDtmAction(fak, "GABUNGAN")}
+                            className="px-3 py-1.5 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                          >
+                            Buka
+                          </button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
+              </Table.Body>
+            </Table>
           )}
         </div>
       )}
@@ -495,48 +494,50 @@ export default function BerandaBmn() {
             </div>
 
             {samplings.length > 0 ? (
-              <div className="overflow-x-auto border rounded-lg">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold">
-                      <th className="px-4 py-3">Nama & Merk</th>
-                      <th className="px-2 py-3 text-center">Tahun</th>
-                      <th className="px-2 py-3 text-center">Jumlah</th>
-                      <th className="px-4 py-3 text-center">Buka</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 text-gray-700">
-                    {samplings.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="font-semibold text-gray-800">{item.namaBarang}</div>
-                          <div className="text-gray-400 text-[10px] mt-0.5">{item.merkAtauType}</div>
-                        </td>
-                        <td className="px-2 py-3 text-center text-gray-600">{item.tahunPerolehan}</td>
-                        <td className="px-2 py-3 text-center font-medium text-gray-800">{item.jumlahBarang}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => openSamplingModal(item)}
-                              className="p-1 border border-gray-200 rounded text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                              title="Edit data"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSampling(item.id)}
-                              className="p-1 border border-gray-200 rounded text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                              title="Hapus data"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.HeaderCell>Nama & Merk</Table.HeaderCell>
+                    <Table.HeaderCell className="text-center w-24">Tahun</Table.HeaderCell>
+                    <Table.HeaderCell className="text-center w-24">Jumlah</Table.HeaderCell>
+                    <Table.HeaderCell className="text-center w-24">Aksi</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {samplings.map((item) => (
+                    <Table.Row key={item.id}>
+                      <Table.Cell>
+                        <div className="font-semibold text-gray-800">{item.namaBarang}</div>
+                        <div className="text-gray-400 text-[10px] mt-0.5">{item.merkAtauType}</div>
+                      </Table.Cell>
+                      <Table.Cell className="text-center text-gray-600">
+                        {item.tahunPerolehan}
+                      </Table.Cell>
+                      <Table.Cell className="text-center font-medium text-gray-800">
+                        {item.jumlahBarang}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => openSamplingModal(item)}
+                            className="p-1 border border-gray-200 rounded text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            title="Edit data"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSampling(item.id)}
+                            className="p-1 border border-gray-200 rounded text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Hapus data"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
             ) : (
               <div className="border border-gray-100 rounded-lg p-10 flex flex-col items-center justify-center text-center bg-gray-50/50">
                 <span className="text-xs text-gray-400">

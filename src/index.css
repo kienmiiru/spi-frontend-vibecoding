@@ -1,1 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-poppins: "Poppins", sans-serif;
+  --color-c-maroon: #5A0D08;
+  --color-c-cream: #F8EEDF;
+  --color-c-red: #8C1007;
+
+  --color-c-maroon-50: #F6E7E6;
+  --color-c-maroon-100: #E8C5C2;
+  --color-c-maroon-200: #D59F9A;
+  --color-c-maroon-300: #C17871;
+  --color-c-maroon-400: #AD5249;
+  --color-c-maroon-500: #5A0D08;
+  --color-c-maroon-600: #4D0B07;
+  --color-c-maroon-700: #400906;
+  --color-c-maroon-800: #330705;
+  --color-c-maroon-900: #260504;
+
+  --color-c-cream-50: #FEFCF9;
+  --color-c-cream-100: #FDF7F2;
+  --color-c-cream-200: #FBF3EA;
+  --color-c-cream-300: #FAEEE3;
+  --color-c-cream-400: #F9EADB;
+  --color-c-cream-500: #F8EEDF;
+  --color-c-cream-600: #E3D9CB;
+  --color-c-cream-700: #CEC4B7;
+  --color-c-cream-800: #B9AEA3;
+  --color-c-cream-900: #A3998F;
+
+  --color-c-red-50: #F7E7E6;
+  --color-c-red-100: #EBC3C1;
+  --color-c-red-200: #D99A96;
+  --color-c-red-300: #C7706B;
+  --color-c-red-400: #B34740;
+  --color-c-red-500: #8C1007;
+  --color-c-red-600: #780E06;
+  --color-c-red-700: #640C05;
+  --color-c-red-800: #500904;
+  --color-c-red-900: #3C0703;
+
+  --color-c-success: #2E7D32;
+  --color-c-success-light: #81C784;
+  --color-c-success-background: #E8F5E9;
+
+  --color-c-error: #D32F2F;
+  --color-c-error-light: #EF5350;
+  --color-c-error-background: #FFEBEE;
+}

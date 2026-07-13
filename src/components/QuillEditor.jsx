@@ -8,6 +8,8 @@ export default function QuillEditor({ value = "", onChange, quillInstanceRef }) 
   useEffect(() => {
     if (!containerRef.current || isInitRef.current) return;
 
+    let script = document.getElementById("quill-js");
+
     if (window.Quill) {
       initializeQuill();
     } else {
@@ -21,17 +23,18 @@ export default function QuillEditor({ value = "", onChange, quillInstanceRef }) 
       }
 
       // Inject Quill JS dynamically if not present
-      if (!document.getElementById("quill-js")) {
-        const script = document.createElement("script");
+      if (!script) {
+        script = document.createElement("script");
         script.id = "quill-js";
         script.src = "https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js";
-        script.onload = () => initializeQuill();
         document.body.appendChild(script);
       }
+
+      script.addEventListener("load", initializeQuill);
     }
 
     function initializeQuill() {
-      if (isInitRef.current) return;
+      if (isInitRef.current || !containerRef.current) return;
       const q = new window.Quill(containerRef.current, {
         theme: "snow",
         modules: {
@@ -70,6 +73,12 @@ export default function QuillEditor({ value = "", onChange, quillInstanceRef }) 
         onChange(JSON.stringify(delta.ops));
       });
     }
+
+    return () => {
+      if (script) {
+        script.removeEventListener("load", initializeQuill);
+      }
+    };
   }, []);
 
   // Sync value from parent if it changes programmatically

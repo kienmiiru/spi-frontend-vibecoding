@@ -1,24 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import * as docx from "docx-preview";
 import {
-  ArrowLeft,
   Loader2,
-  FolderKanban,
-  CheckCircle,
-  Clock,
-  User,
-  Calendar,
-  FileSpreadsheet,
 } from "lucide-react";
 
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
 import BulletedTextArea from "../../components/BulletedTextArea";
 import QuillEditor from "../../components/QuillEditor";
+import Table from "../../components/Table";
 import { apiFetch, apiFetchBlob } from "../../lib/api";
 import { parsePresensiExcel, calculateJamKerja } from "../../utils/excelParser";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function DtmSdm() {
+  const confirm = useConfirm();
+
   // Main states
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
@@ -41,6 +38,7 @@ export default function DtmSdm() {
     detailTemuan: "",
     kodeTemuan: "",
   });
+  window.temuanFormState = temuanFormState
 
   const [detailFormState, setDetailFormState] = useState({
     inputAspekMonitoring: "",
@@ -222,11 +220,13 @@ export default function DtmSdm() {
         body: JSON.stringify({ statusDtm: nextStatus }),
       });
 
-      showNotification(
-        `Status DTM berhasil diubah menjadi ${
+      confirm({
+        title: "",
+        message: `Status DTM berhasil diubah menjadi ${
           nextStatus === "SUDAH_DITERUSKAN" ? "Sudah Selesai" : "Belum Selesai"
-        }`
-      );
+        }`,
+        type: "info"
+      });
 
       // Update selected state if currently in detail view
       if (selectedDtm && selectedDtm.id === dtm.id) {
@@ -262,7 +262,11 @@ export default function DtmSdm() {
         }
       );
       setSelectedDtm(updated);
-      showNotification("Data temuan dan kode temuan berhasil disimpan");
+      confirm({
+        title: "",
+        message: "Data temuan dan kode temuan berhasil disimpan",
+        type: "info"
+      });
     } catch (err) {
       showNotification("Gagal menyimpan temuan: " + err.message, "error");
     } finally {
@@ -299,7 +303,11 @@ export default function DtmSdm() {
         }
       );
       setSelectedDtm(updated);
-      showNotification("Detail DTM berhasil diperbarui");
+      confirm({
+        title: "",
+        message: "Detail DTM berhasil diperbarui",
+        type: "info"
+      });
     } catch (err) {
       showNotification("Gagal memperbarui detail DTM: " + err.message, "error");
     } finally {
@@ -346,7 +354,6 @@ export default function DtmSdm() {
       });
       setPreviewBlob(blob);
       setIsPreviewOpen(true);
-      showNotification("Pratinjau dokumen siap ditampilkan");
     } catch (err) {
       showNotification("Gagal memuat pratinjau dokumen: " + err.message, "error");
     } finally {
@@ -412,7 +419,6 @@ export default function DtmSdm() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-gray-700" />
             DTM SDM
           </h1>
           <p className="text-xs text-gray-500 mt-1">
@@ -468,35 +474,33 @@ export default function DtmSdm() {
 
       {/* VIEW MODE: LIST TABLE */}
       {viewMode === "list" ? (
-        <div className="border border-gray-300 rounded overflow-hidden bg-white">
+        <div>
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-gray-500">
+            <div className="p-8 text-center text-xs text-gray-500 border border-gray-300 bg-white">
               Memuat data unit kerja...
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                  <th className="px-6 py-3 border-r border-gray-300">Unit Kerja</th>
-                  <th className="px-6 py-3 text-center border-r border-gray-300 w-64">
-                    Status DTM
-                  </th>
-                  <th className="px-6 py-3 text-center w-60">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-xs text-gray-800 bg-white">
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center w-64">Status DTM</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center w-60">Aksi</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {fakultasList.map((fak) => {
                   const dtm = findDtm(fak.id);
                   const isCreated = !!dtm;
 
                   return (
-                    <tr key={fak.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-semibold border-r border-gray-300 text-sm text-gray-900">
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold text-sm text-gray-900">
                         {fak.namaFakultas}
-                      </td>
+                      </Table.Cell>
 
                       {/* STATUS DTM */}
-                      <td className="px-6 py-4 border-r border-gray-300 text-center">
+                      <Table.Cell className="text-center">
                         {isCreated ? (
                           <span
                             className={`inline-block border px-2.5 py-0.5 rounded text-[10px] font-semibold ${
@@ -505,19 +509,17 @@ export default function DtmSdm() {
                                 : "bg-gray-50 border-gray-300 text-gray-800"
                             }`}
                           >
-                            {dtm.statusDtm === "SUDAH_DITERUSKAN"
-                              ? "Selesai"
-                              : "Belum Selesai"}
+                            {dtm.statusDtm === "SUDAH_DITERUSKAN" ? "Selesai" : "Belum Selesai"}
                           </span>
                         ) : (
                           <span className="text-[10px] text-gray-400 italic">
                             Belum dibuat di Jam Kerja SDM
                           </span>
                         )}
-                      </td>
+                      </Table.Cell>
 
                       {/* ACTIONS */}
-                      <td className="px-6 py-4 text-center">
+                      <Table.Cell className="text-center">
                         {isCreated ? (
                           <div className="flex items-center justify-center gap-2">
                             <button
@@ -534,16 +536,14 @@ export default function DtmSdm() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-gray-400 font-semibold">
-                            -
-                          </span>
+                          <span className="text-[10px] text-gray-400 font-semibold">-</span>
                         )}
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   );
                 })}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           )}
         </div>
       ) : (
@@ -668,43 +668,41 @@ export default function DtmSdm() {
                           </div>
                         </div>
 
-                        {/* Compact Daily table */}
-                        <div className="space-y-1.5">
-                          <div className="text-[10px] font-bold text-gray-800">
-                            Rincian Harian (Kepatuhan):
-                          </div>
-                          
-                          <div className="overflow-x-auto border rounded max-h-[220px] overflow-y-auto">
-                            <table className="w-full text-left border-collapse text-[10px]">
-                              <thead>
-                                <tr className="bg-gray-150 bg-gray-50 border-b border-gray-200 text-[9px] font-bold text-gray-500">
-                                  <th className="px-2.5 py-1.5 border-r border-gray-200">Tanggal</th>
-                                  <th className="px-2.5 py-1.5 border-r border-gray-200 text-center">Masuk</th>
-                                  <th className="px-2.5 py-1.5 border-r border-gray-200 text-center">Pulang</th>
-                                  <th className="px-2.5 py-1.5 text-center">Total</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200 text-gray-700 bg-white">
+                          {/* Compact Daily table */}
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] font-bold text-gray-800">
+                              Rincian Harian (Kepatuhan):
+                            </div>
+                            
+                            <Table>
+                              <Table.Header>
+                                <Table.Row>
+                                  <Table.HeaderCell className="px-2.5 py-1.5 border-r border-gray-200">Tanggal</Table.HeaderCell>
+                                  <Table.HeaderCell className="px-2.5 py-1.5 border-r border-gray-200 text-center">Masuk</Table.HeaderCell>
+                                  <Table.HeaderCell className="px-2.5 py-1.5 border-r border-gray-200 text-center">Pulang</Table.HeaderCell>
+                                  <Table.HeaderCell className="px-2.5 py-1.5 text-center">Total</Table.HeaderCell>
+                                </Table.Row>
+                              </Table.Header>
+                              <Table.Body>
                                 {parsedData.days.map((day) => (
-                                  <tr key={day.dateStr} className="hover:bg-gray-50">
-                                    <td className="px-2.5 py-1.5 border-r border-gray-200 font-semibold">
+                                  <Table.Row key={day.dateStr}>
+                                    <Table.Cell className="px-2.5 py-1.5 border-r border-gray-200 font-semibold">
                                       {day.dateStr}
-                                    </td>
-                                    <td className="px-2.5 py-1.5 border-r border-gray-200 text-center text-emerald-600">
+                                    </Table.Cell>
+                                    <Table.Cell className="px-2.5 py-1.5 border-r border-gray-200 text-center text-emerald-600">
                                       {day.hadirTime}
-                                    </td>
-                                    <td className="px-2.5 py-1.5 border-r border-gray-200 text-center text-amber-600">
+                                    </Table.Cell>
+                                    <Table.Cell className="px-2.5 py-1.5 border-r border-gray-200 text-center text-amber-600">
                                       {day.pulangTime}
-                                    </td>
-                                    <td className="px-2.5 py-1.5 text-center font-semibold text-gray-900 bg-gray-55/30">
+                                    </Table.Cell>
+                                    <Table.Cell className="px-2.5 py-1.5 text-center font-semibold text-gray-900 bg-gray-55/30">
                                       {day.totalHours} jam
-                                    </td>
-                                  </tr>
+                                    </Table.Cell>
+                                  </Table.Row>
                                 ))}
-                              </tbody>
-                            </table>
+                              </Table.Body>
+                            </Table>
                           </div>
-                        </div>
 
                       </div>
                     ) : (
@@ -733,7 +731,6 @@ export default function DtmSdm() {
                     </label>
                     <input
                       type="text"
-                      required
                       value={temuanFormState.kodeTemuan}
                       onChange={(e) =>
                         setTemuanFormState({
@@ -748,15 +745,15 @@ export default function DtmSdm() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Detail Temuan (Quill Editor)
+                      Detail Temuan
                     </label>
                     <QuillEditor
                       value={temuanFormState.detailTemuan}
                       onChange={(opsJson) =>
-                        setTemuanFormState({
-                          ...temuanFormState,
+                        setTemuanFormState((prev) => ({
+                          ...prev,
                           detailTemuan: opsJson,
-                        })
+                        }))
                       }
                       quillInstanceRef={quillRef}
                     />
@@ -1083,7 +1080,7 @@ export default function DtmSdm() {
             <div className="flex-1 overflow-auto p-6 bg-gray-100 flex justify-center">
               <div
                 ref={previewContainerRef}
-                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px]"
+                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px] h-fit"
               />
             </div>
           </div>

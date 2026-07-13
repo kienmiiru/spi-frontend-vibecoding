@@ -4,9 +4,13 @@ import { ArrowLeft, Loader2, FileEdit, CheckCircle, HelpCircle } from "lucide-re
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
 import QuillEditor from "../../components/QuillEditor";
+import Table from "../../components/Table";
 import { apiFetch } from "../../lib/api";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function BerandaSmmSmap() {
+  const confirm = useConfirm();
+  
   // Main states
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
@@ -28,6 +32,8 @@ export default function BerandaSmmSmap() {
     detailTemuan7: "",
     kodeTemuan: "",
   });
+  window.temuanFormState = temuanFormState
+  window.setTemuanFormState = setTemuanFormState
 
   // Loading & notifications
   const [isLoading, setIsLoading] = useState(false);
@@ -139,7 +145,11 @@ export default function BerandaSmmSmap() {
         }),
       });
       setSelectedDtm(updated);
-      showNotification("Data temuan dan kode temuan berhasil disimpan");
+      confirm({
+        title: "",
+        message: "Data temuan dan kode temuan berhasil disimpan",
+        type: "info"
+      });
       
       // Update local item in list to reflect state immediately when going back
       setDtmList((prev) =>
@@ -195,8 +205,7 @@ export default function BerandaSmmSmap() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FileEdit className="w-6 h-6 text-gray-700" />
-            Input Temuan SMM-SMAP
+            Beranda
           </h1>
           <p className="text-xs text-gray-500 mt-1">
             {viewMode === "list"
@@ -223,91 +232,89 @@ export default function BerandaSmmSmap() {
 
       {/* MAIN VIEW: LIST MODE */}
       {viewMode === "list" && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white">
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white border border-gray-300">
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
               <span className="text-sm font-medium">Memuat data unit kerja...</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
-                    <th className="px-6 py-4 border-r border-gray-150">Unit Kerja</th>
-                    <th className="px-6 py-4 text-center border-r border-gray-150">Status DTM</th>
-                    <th className="px-6 py-4 text-center border-r border-gray-150">Status Input Temuan</th>
-                    <th className="px-6 py-4 text-center w-40">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm text-gray-700 bg-white">
-                  {fakultasList.map((fak) => {
-                    const dtm = findDtm(fak.id);
-                    const isCreated = !!dtm;
-                    const isFilled = isCreated && isTemuanFilled(dtm);
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Status DTM</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Status Input Temuan</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center w-40">Aksi</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {fakultasList.map((fak) => {
+                  const dtm = findDtm(fak.id);
+                  const isCreated = !!dtm;
+                  const isFilled = isCreated && isTemuanFilled(dtm);
 
-                    return (
-                      <tr key={fak.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-gray-800 border-r border-gray-150">
-                          {fak.namaFakultas}
-                        </td>
+                  return (
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold text-gray-800">
+                        {fak.namaFakultas}
+                      </Table.Cell>
 
-                        {/* STATUS DTM */}
-                        <td className="px-6 py-4 border-r border-gray-150">
-                          <div className="flex justify-center">
-                            {isCreated ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Sudah Dibuat
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Belum Dibuat
-                              </span>
-                            )}
-                          </div>
-                        </td>
+                      {/* STATUS DTM */}
+                      <Table.Cell className="text-center">
+                        <div className="flex justify-center">
+                          {isCreated ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Sudah Dibuat
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                              Belum Dibuat
+                            </span>
+                          )}
+                        </div>
+                      </Table.Cell>
 
-                        {/* STATUS INPUT TEMUAN */}
-                        <td className="px-6 py-4 border-r border-gray-150">
-                          <div className="flex justify-center">
-                            {isFilled ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Sudah Diisi
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                Belum Diisi
-                              </span>
-                            )}
-                          </div>
-                        </td>
+                      {/* STATUS INPUT TEMUAN */}
+                      <Table.Cell className="text-center">
+                        <div className="flex justify-center">
+                          {isFilled ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Sudah Diisi
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                              Belum Diisi
+                            </span>
+                          )}
+                        </div>
+                      </Table.Cell>
 
-                        {/* ACTION */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-center">
-                            <button
-                              disabled={isSaving}
-                              onClick={() => handleDtmAction(fak)}
-                              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 ${
-                                isCreated
-                                  ? "bg-gray-800 text-white hover:bg-gray-700"
-                                  : "bg-indigo-650 text-white hover:bg-indigo-700 bg-indigo-600"
-                              }`}
-                            >
-                              {isCreated ? "Buka" : "Buat DTM"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      {/* ACTION */}
+                      <Table.Cell className="text-center">
+                        <div className="flex justify-center">
+                          <button
+                            disabled={isSaving}
+                            onClick={() => handleDtmAction(fak)}
+                            className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 ${
+                              isCreated
+                                ? "bg-gray-800 text-white hover:bg-gray-700"
+                                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                            }`}
+                          >
+                            {isCreated ? "Buka" : "Buat DTM"}
+                          </button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
+              </Table.Body>
+            </Table>
           )}
         </div>
       )}
@@ -328,7 +335,7 @@ export default function BerandaSmmSmap() {
             {selectedDtm.statusDtm === "SUDAH_DITERUSKAN" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-green-300 bg-green-50 text-green-800 text-[10px] font-semibold">
                 <CheckCircle className="w-3 h-3" />
-                Selesai (Read Only / Disarankan)
+                Selesai
               </span>
             )}
           </div>

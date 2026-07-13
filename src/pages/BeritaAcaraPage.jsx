@@ -15,8 +15,10 @@ import {
   FileSignature
 } from "lucide-react";
 import * as docx from "docx-preview";
+import { useConfirm } from "../context/ConfirmContext";
 
 export default function BeritaAcaraPage() {
+  const confirm = useConfirm();
   const { user } = useAuth();
   const isPbj = user?.role === "PBJ";
 
@@ -140,7 +142,11 @@ export default function BeritaAcaraPage() {
         body: JSON.stringify(payload),
       });
 
-      showNotification(`Berita acara ${activeTab === "awal" ? "visitasi monev" : "final meeting"} berhasil dibuat`);
+      confirm({
+        title: "",
+        message: `Berita acara ${activeTab === "awal" ? "visitasi monev" : "final meeting"} berhasil dibuat`,
+        type: "info"
+      });
       
       // Reset form and switch tab to riwayat
       setForm({
@@ -204,7 +210,11 @@ export default function BeritaAcaraPage() {
         body: JSON.stringify(payload),
       });
 
-      showNotification("Berita acara berhasil diperbarui");
+      confirm({
+        title: "",
+        message: "Berita acara berhasil diperbarui",
+        type: "info"
+      });
       setIsEditing(false);
       
       // Reload updated details and list
@@ -220,16 +230,25 @@ export default function BeritaAcaraPage() {
 
   // Handle report deletion
   const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus Berita Acara ini?")) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "",
+      message: "Apakah Anda yakin ingin menghapus Berita Acara ini?",
+      confirmText: "Hapus",
+      cancelText: "Batal",
+      type: "danger"
+    });
+    if (!confirmed) return;
     
     setIsSaving(true);
     try {
       await apiFetch(`/api/berita-acara/${id}`, {
         method: "DELETE",
       });
-      showNotification("Berita acara berhasil dihapus");
+      confirm({
+        title: "",
+        message: "Berita acara berhasil dihapus",
+        type: "info"
+      });
       setIsDetailModalOpen(false);
       setSelectedReport(null);
       loadReports();
@@ -277,7 +296,6 @@ export default function BeritaAcaraPage() {
       });
       setPreviewBlob(blob);
       setIsPreviewOpen(true);
-      showNotification("Pratinjau dokumen siap ditampilkan");
     } catch (err) {
       showNotification("Gagal memuat pratinjau dokumen: " + err.message, "error");
     } finally {
@@ -357,43 +375,42 @@ export default function BeritaAcaraPage() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FileSignature className="w-6 h-6 text-gray-700" />
-            Berita Acara {user ? `(${user.role})` : ""}
+            Berita Acara
           </h1>
           <p className="text-xs text-gray-500 mt-1">
-            Buat, kelola, pratinjau, dan ekspor berita acara visitasi monev serta final meeting.
+            Kelola berita acara sebelum dan sesudah pengisian DTM.
           </p>
         </div>
       </div>
 
       {/* TAB NAVIGATION */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex gap-3 border-gray-200">
         <button
           onClick={() => setActiveTab("awal")}
-          className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px ${
+          className={`px-4 py-2 text-xs font-semibold border border-[#D1D5DC] rounded-xl transition-colors -mb-px ${
             activeTab === "awal"
-              ? "border-gray-800 text-gray-900"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              ? "bg-c-maroon text-white"
+              : "text-black hover:text-gray-700"
           }`}
         >
-          Awal (Visitasi Monev)
+          Awal
         </button>
         <button
           onClick={() => setActiveTab("akhir")}
-          className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px ${
+          className={`px-4 py-2 text-xs font-semibold border border-[#D1D5DC] rounded-xl transition-colors -mb-px ${
             activeTab === "akhir"
-              ? "border-gray-800 text-gray-900"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              ? "bg-c-maroon text-white"
+              : "text-black hover:text-gray-700"
           }`}
         >
-          Akhir (Final Meeting)
+          Akhir
         </button>
         <button
           onClick={() => setActiveTab("riwayat")}
-          className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px ${
+          className={`px-4 py-2 text-xs font-semibold border border-[#D1D5DC] rounded-xl transition-colors -mb-px ${
             activeTab === "riwayat"
-              ? "border-gray-800 text-gray-900"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              ? "bg-c-maroon text-white"
+              : "text-black hover:text-gray-700"
           }`}
         >
           Riwayat
@@ -997,7 +1014,7 @@ export default function BeritaAcaraPage() {
             <div className="flex-1 overflow-auto p-6 bg-gray-100 flex justify-center">
               <div
                 ref={previewContainerRef}
-                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px]"
+                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px] h-fit"
               />
             </div>
           </div>

@@ -4,8 +4,11 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import BulletedTextArea from "../../components/BulletedTextArea";
 import Notification from "../../components/Notification";
 import { apiFetch } from "../../lib/api";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function PeraturanSdm() {
+  const confirm = useConfirm();
+
   const [kriteriaText, setKriteriaText] = useState("");
 
   // Loading & notifications
@@ -47,7 +50,11 @@ export default function PeraturanSdm() {
         body: JSON.stringify({ value: kriteriaText }),
       });
       setKriteriaText(updated.value || "");
-      showNotification("Kriteria default audit SDM berhasil diperbarui");
+      confirm({
+        title: "",
+        message: "Kriteria default audit SDM berhasil diperbarui",
+        type: "info"
+      });
     } catch (err) {
       showNotification(
         err.message || "Gagal memperbarui kriteria audit",
@@ -72,7 +79,6 @@ export default function PeraturanSdm() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-gray-700" />
             Peraturan & Kriteria SDM
           </h1>
           <p className="text-xs text-gray-500 mt-1">

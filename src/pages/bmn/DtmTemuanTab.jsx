@@ -113,7 +113,7 @@ export default function DtmTemuanTab({
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Detail Temuan (Quill Editor)
+              Detail Temuan
             </label>
             <QuillEditor
               value={temuanFormState.detailTemuan}

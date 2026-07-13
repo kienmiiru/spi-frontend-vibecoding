@@ -14,12 +14,17 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "datatables.net": "^2.3.8",
+    "datatables.net-dt": "^2.3.8",
+    "datatables.net-searchbuilder": "^1.8.4",
+    "datatables.net-searchbuilder-dt": "^1.8.4",
     "docx-preview": "^0.3.7",
     "lucide-react": "^1.17.0",
     "patch-package": "^8.0.1",
     "react": "^19.2.6",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.6",
+    "react-pdf": "^10.4.1",
     "react-router-dom": "^7.16.0",
     "tailwindcss": "^4.3.0",
     "xlsx": "^0.18.5"

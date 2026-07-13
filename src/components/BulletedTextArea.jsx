@@ -1,6 +1,15 @@
 import React, { useRef } from 'react';
 
-const BulletedTextArea = ({ value = '', onChange, placeholder = 'Mulai menulis daftar...' }) => {
+const BulletedTextArea = ({
+    value = '',
+    onChange,
+    placeholder = 'Mulai menulis daftar...',
+    disabled = false,
+    readOnly = false,
+    height = '180px',
+    className = '',
+    style = {}
+}) => {
     const textareaRef = useRef(null);
     const mirrorRef = useRef(null);
 
@@ -31,16 +40,20 @@ const BulletedTextArea = ({ value = '', onChange, placeholder = 'Mulai menulis d
     // Split purely by hard returns (newlines)
     const lines = value.split('\n');
 
+    const calculatedBg = disabled ? '#f3f4f6' : (readOnly ? '#f9fafb' : '#ffffff');
+
     return (
         <div
+            className={className}
             style={{
                 position: 'relative',
                 width: '100%',
-                height: '180px',
+                height: height,
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 overflow: 'hidden',
-                backgroundColor: '#ffffff'
+                backgroundColor: calculatedBg,
+                ...style
             }}
         >
             {/* BACKGROUND LAYER (Mirror) - Handles the bullets */}
@@ -54,7 +67,7 @@ const BulletedTextArea = ({ value = '', onChange, placeholder = 'Mulai menulis d
                     left: 0,
                     height: '100%',
                     overflowY: 'hidden', // Scroll is controlled by the textarea
-                    backgroundColor: '#f9fafb',
+                    backgroundColor: calculatedBg,
                     color: 'transparent', // Make text invisible, but keep its physical space
                     pointerEvents: 'none', // Let clicks pass right through to the textarea
                     zIndex: 1,
@@ -63,7 +76,7 @@ const BulletedTextArea = ({ value = '', onChange, placeholder = 'Mulai menulis d
                 {lines.map((line, index) => (
                     <div key={index} style={{ position: 'relative' }}>
                         <span
-                            style={{
+                           style={{
                                 position: 'absolute',
                                 left: '-20px',
                                 color: '#9ca3af', // Visible color for the bullet
@@ -86,6 +99,8 @@ const BulletedTextArea = ({ value = '', onChange, placeholder = 'Mulai menulis d
                 onChange={(e) => onChange && onChange(e.target.value)}
                 onScroll={handleScroll}
                 placeholder={placeholder}
+                disabled={disabled}
+                readOnly={readOnly}
                 style={{
                     ...sharedStyles,
                     position: 'absolute',
@@ -94,8 +109,9 @@ const BulletedTextArea = ({ value = '', onChange, placeholder = 'Mulai menulis d
                     height: '100%',
                     resize: 'none', // Disable user resize to prevent sync breaking
                     backgroundColor: 'transparent', // Let the background mirror show through
-                    color: '#1f2937', // Actual text color
+                    color: disabled ? '#9ca3af' : '#1f2937', // Actual text color
                     zIndex: 2,
+                    cursor: disabled ? 'not-allowed' : (readOnly ? 'default' : 'text'),
                 }}
             />
         </div>

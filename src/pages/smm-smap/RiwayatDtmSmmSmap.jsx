@@ -4,9 +4,13 @@ import { Eye, Download, Loader2, FileText, FileDown } from "lucide-react";
 
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
+import Table from "../../components/Table";
 import { apiFetch, apiFetchBlob } from "../../lib/api";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function RiwayatDtmSmmSmap() {
+  const confirm = useConfirm();
+
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
   const [dtmList, setDtmList] = useState([]);
@@ -99,7 +103,6 @@ export default function RiwayatDtmSmmSmap() {
       });
       setPreviewBlob(blob);
       setIsPreviewOpen(true);
-      showNotification("Pratinjau dokumen siap ditampilkan");
     } catch (err) {
       showNotification("Gagal memuat pratinjau dokumen: " + err.message, "error");
     } finally {
@@ -148,7 +151,6 @@ export default function RiwayatDtmSmmSmap() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-gray-700" />
             Riwayat DTM SMM-SMAP
           </h1>
           <p className="text-xs text-gray-500 mt-1">
@@ -163,64 +165,62 @@ export default function RiwayatDtmSmmSmap() {
       </div>
 
       {/* MAIN VIEW */}
-      <div className="bg-white border border-gray-300 rounded overflow-hidden">
+      <div>
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white">
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white border border-gray-300">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
             <span className="text-xs font-semibold">Memuat data riwayat...</span>
           </div>
         ) : completedDtms.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-300 text-xs font-semibold text-gray-600">
-                  <th className="px-6 py-3 border-r border-gray-200 w-16 text-center">No</th>
-                  <th className="px-6 py-3 border-r border-gray-200">Unit Kerja</th>
-                  <th className="px-6 py-3 border-r border-gray-200 text-center w-40">Tahun Anggaran</th>
-                  <th className="px-6 py-3 text-center w-56">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-xs text-gray-800 bg-white">
-                {completedDtms.map((dtm, index) => (
-                  <tr key={dtm.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 border-r border-gray-200 text-center font-medium">
-                      {index + 1}
-                    </td>
-                    <td className="px-6 py-4 border-r border-gray-200 font-semibold text-gray-900">
-                      {getFacultyName(dtm.fakultasId)}
-                    </td>
-                    <td className="px-6 py-4 border-r border-gray-200 text-center">
-                      {dtm.tahunAnggaran}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handlePreviewDocx(dtm)}
-                          disabled={isSaving}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded text-xs font-medium transition-colors disabled:opacity-50"
-                          title="Pratinjau Dokumen"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          Pratinjau
-                        </button>
-                        <button
-                          onClick={() => handleExportDocx(dtm)}
-                          disabled={isSaving}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-gray-800 bg-gray-800 text-white hover:bg-gray-900 rounded text-xs font-medium transition-colors disabled:opacity-50"
-                          title="Ekspor ke Word"
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                          Ekspor Word
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell className="w-16 text-center">No</Table.HeaderCell>
+                <Table.HeaderCell>Unit Kerja</Table.HeaderCell>
+                <Table.HeaderCell className="text-center w-40">Tahun Anggaran</Table.HeaderCell>
+                <Table.HeaderCell className="text-center w-56">Aksi</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {completedDtms.map((dtm, index) => (
+                <Table.Row key={dtm.id}>
+                  <Table.Cell className="text-center font-medium">
+                    {index + 1}
+                  </Table.Cell>
+                  <Table.Cell className="font-semibold text-gray-900">
+                    {getFacultyName(dtm.fakultasId)}
+                  </Table.Cell>
+                  <Table.Cell className="text-center">
+                    {dtm.tahunAnggaran}
+                  </Table.Cell>
+                  <Table.Cell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handlePreviewDocx(dtm)}
+                        disabled={isSaving}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded text-xs font-medium transition-colors disabled:opacity-50"
+                        title="Pratinjau Dokumen"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Pratinjau
+                      </button>
+                      <button
+                        onClick={() => handleExportDocx(dtm)}
+                        disabled={isSaving}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-gray-800 bg-gray-800 text-white hover:bg-gray-900 rounded text-xs font-medium transition-colors disabled:opacity-50"
+                        title="Ekspor ke Word"
+                      >
+                        <FileDown className="w-3.5 h-3.5" />
+                        Ekspor Word
+                      </button>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
         ) : (
-          <div className="border border-gray-150 rounded-lg p-12 flex flex-col items-center justify-center text-center bg-gray-50/50">
+          <div className="border border-gray-300 p-12 flex flex-col items-center justify-center text-center bg-gray-50/50">
             <span className="text-xs text-gray-400 font-semibold">
               Tidak ada riwayat DTM SMM-SMAP yang sudah ditandai selesai untuk tahun anggaran {selectedYear}.
             </span>
@@ -247,7 +247,7 @@ export default function RiwayatDtmSmmSmap() {
             <div className="flex-1 overflow-auto p-6 bg-gray-100 flex justify-center">
               <div
                 ref={previewContainerRef}
-                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px]"
+                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px] h-fit"
               />
             </div>
           </div>

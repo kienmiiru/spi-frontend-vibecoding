@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
+import Table from "../../components/Table";
 import { apiFetch } from "../../lib/api";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function LembarKerjaBmn() {
+  const confirm = useConfirm();
+  
   // Main states
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
@@ -142,7 +146,11 @@ export default function LembarKerjaBmn() {
         })
       });
 
-      showNotification("Status barang sampling berhasil disimpan", "success");
+      confirm({
+        title: "",
+        message: "Status barang sampling berhasil disimpan",
+        type: "info"
+      });
 
       // Update local state
       setSamplings((prev) =>
@@ -228,35 +236,35 @@ export default function LembarKerjaBmn() {
 
       {/* VIEW MODE: LIST TABLE */}
       {viewMode === "list" ? (
-        <div className="border border-gray-300 rounded overflow-hidden">
+        <div>
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-gray-500">
+            <div className="p-8 text-center text-xs text-gray-500 border border-gray-300 bg-white">
               Memuat data...
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                  <th className="px-4 py-2 border-r border-gray-300">Nama Unit Kerja</th>
-                  <th className="px-4 py-2 text-center border-r border-gray-300">Barang Persediaan</th>
-                  <th className="px-4 py-2 text-center border-r border-gray-300">Pembelian Aset</th>
-                  <th className="px-4 py-2 text-center">Gabungan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-xs text-gray-800">
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Nama Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Barang Persediaan</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Pembelian Aset</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Gabungan</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {fakultasList.map((fak) => {
                   const dtmPersediaan = findDtm(fak.id, "BARANG_PERSEDIAAN");
                   const dtmPembelian = findDtm(fak.id, "PEMBELIAN_ASET");
                   const dtmGabungan = findDtm(fak.id, "GABUNGAN");
 
                   return (
-                    <tr key={fak.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-semibold border-r border-gray-300">
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold">
                         {fak.namaFakultas}
-                      </td>
+                      </Table.Cell>
 
                       {/* TIPE 1: BARANG PERSEDIAAN */}
-                      <td className="px-4 py-3 border-r border-gray-300">
+                      <Table.Cell>
                         <div className="flex flex-col items-center gap-1.5">
                           <div>
                             {dtmPersediaan ? (
@@ -277,10 +285,10 @@ export default function LembarKerjaBmn() {
                             {dtmPersediaan ? 'Buka' : 'Buat'}
                           </button>
                         </div>
-                      </td>
+                      </Table.Cell>
 
                       {/* TIPE 2: PEMBELIAN ASET */}
-                      <td className="px-4 py-3 border-r border-gray-300">
+                      <Table.Cell>
                         <div className="flex flex-col items-center gap-1.5">
                           <div>
                             {dtmPembelian ? (
@@ -301,10 +309,10 @@ export default function LembarKerjaBmn() {
                             {dtmPembelian ? 'Buka' : 'Buat'}
                           </button>
                         </div>
-                      </td>
+                      </Table.Cell>
 
                       {/* TIPE 3: GABUNGAN */}
-                      <td className="px-4 py-3">
+                      <Table.Cell>
                         <div className="flex flex-col items-center gap-1.5">
                           <div>
                             {dtmGabungan ? (
@@ -325,12 +333,12 @@ export default function LembarKerjaBmn() {
                             {dtmGabungan ? 'Buka' : 'Buat'}
                           </button>
                         </div>
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   );
                 })}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           )}
         </div>
       ) : (

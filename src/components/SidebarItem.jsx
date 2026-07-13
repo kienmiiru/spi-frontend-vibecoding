@@ -1,55 +1,57 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export default function SidebarItem({ item }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const Icon = item.icon;
 
   if (item.children) {
     return (
-      <div>
-        <div className="flex items-center">
+      <div className="w-full">
+        <div className="flex items-center w-full">
           <NavLink
             to={item.path || '#'}
             className={({ isActive }) =>
-                  `w-full flex items-center justify-between px-3 py-2 rounded-lg ${
+                  `w-full flex items-center justify-between px-3 py-2 rounded-xl text-white transition-colors duration-150 ${
                     isActive
-                      ? "bg-gray-200"
-                      : "hover:bg-gray-100"
+                      ? "bg-c-red font-medium"
+                      : "bg-c-maroon hover:bg-c-red/40"
                   }`
                 }
           >
             <div className="flex items-center gap-2">
-              {Icon && <Icon size={18} />}
+              {Icon && <Icon size={18} className="text-white" />}
               <span>{item.label}</span>
             </div>
-            <ChevronDown
+            <ChevronRight
                 onClick={(e) => {e.preventDefault(); e.stopPropagation(); setOpen(!open)}}
                 size={18}
-                className={`transition ${open ? "rotate-180" : ""}`}
+                className={`transition-transform duration-200 text-white ${open ? "rotate-90" : ""}`}
               />
           </NavLink>
         </div>
 
         {open && (
-          <div className="ml-6 mt-2 space-y-1">
-            {item.children.map((child) => (
-              <NavLink
+          <div className="ml-4 mt-1 space-y-1 pl-2">
+            {item.children.map((child) => {
+              const SubIcon = child.icon
+              return <NavLink
                 key={child.path}
                 to={child.path}
                 className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm ${
+                  `flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-white transition-colors duration-150 ${
                     isActive
-                      ? "bg-gray-200"
-                      : "hover:bg-gray-100"
+                      ? "bg-c-red font-medium"
+                      : "bg-c-maroon hover:bg-c-red/40"
                   }`
                 }
               >
-                {child.label}
+                {SubIcon && <SubIcon size={18} className="text-white" />}
+                <span>{child.label}</span>
               </NavLink>
-            ))}
+            })}
           </div>
         )}
       </div>
@@ -60,14 +62,14 @@ export default function SidebarItem({ item }) {
     <NavLink
       to={item.path}
       className={({ isActive }) =>
-        `flex items-center gap-2 px-3 py-2 rounded-lg ${
+        `flex items-center gap-2 px-3 py-2 rounded-xl text-white transition-colors duration-150 ${
           isActive
-            ? "bg-gray-200"
-            : "hover:bg-gray-100"
+            ? "bg-c-red font-medium"
+            : "bg-c-maroon hover:bg-c-red/40"
         }`
       }
     >
-      {Icon && <Icon size={18} />}
+      {Icon && <Icon size={18} className="text-white" />}
       <span>{item.label}</span>
     </NavLink>
   );

@@ -1,8 +1,13 @@
 import {
   LayoutDashboard,
-  FolderKanban,
   FileText,
-  DollarSignIcon
+  SquarePen,
+  ClipboardCheck,
+  History,
+  WalletIcon,
+  BanknoteArrowDownIcon,
+  ClipboardList,
+  FileCheckCorner
 } from "lucide-react";
 
 export const menuByRole = {
@@ -14,29 +19,35 @@ export const menuByRole = {
     },
     {
       label: "Keuangan",
-      icon: DollarSignIcon,
+      icon: WalletIcon,
       path: "/keuangan/keuangan",
     },
     {
       label: "Cash Opname",
-      icon: DollarSignIcon,
+      icon: BanknoteArrowDownIcon,
       path: "/keuangan/cash-opname",
     },
     {
       label: "DTM",
-      icon: FolderKanban,
+      icon: FileText,
       path: "/keuangan/dtm",
       children: [
         {
           label: "Riwayat",
+          icon: History,
           path: "/keuangan/riwayat-dtm",
         },
       ],
     },
     {
       label: "Peraturan",
-      icon: FileText,
+      icon: SquarePen,
       path: "/keuangan/peraturan",
+    },
+    {
+      label: "Berita Acara",
+      icon: ClipboardCheck,
+      path: "/keuangan/berita-acara",
     },
   ],
 
@@ -48,23 +59,29 @@ export const menuByRole = {
     },
     {
       label: "DTM",
-      icon: FolderKanban,
+      icon: FileText,
       path: "/pbj/dtm",
       children: [
         {
           label: "Riwayat",
+          icon: History,
           path: "/pbj/riwayat-dtm",
         },
       ],
     },
     {
+      label: "Checklist",
+      icon: ClipboardList,
+      path: "/pbj/checklist",
+    },
+    {
       label: "Peraturan",
-      icon: FileText,
+      icon: SquarePen,
       path: "/pbj/peraturan",
     },
     {
       label: "Berita Acara",
-      icon: FileText,
+      icon: ClipboardCheck,
       path: "/pbj/berita-acara",
     },
   ],
@@ -77,29 +94,31 @@ export const menuByRole = {
       children: [
         {
           label: "Lembar Kerja",
+          icon: FileCheckCorner,
           path: "/bmn/lembar-kerja",
         },
       ],
     },
     {
       label: "DTM",
-      icon: FolderKanban,
+      icon: FileText,
       path: "/bmn/dtm",
       children: [
         {
           label: "Riwayat",
+          icon: History,
           path: "/bmn/riwayat-dtm",
         },
       ],
     },
     {
       label: "Peraturan",
-      icon: FileText,
+      icon: SquarePen,
       path: "/bmn/peraturan",
     },
     {
       label: "Berita Acara",
-      icon: FileText,
+      icon: ClipboardCheck,
       path: "/bmn/berita-acara",
     },
   ],
@@ -112,23 +131,24 @@ export const menuByRole = {
     },
     {
       label: "DTM",
-      icon: FolderKanban,
+      icon: FileText,
       path: "/smm-smap/dtm",
       children: [
         {
           label: "Riwayat",
+          icon: History,
           path: "/smm-smap/riwayat-dtm",
         },
       ],
     },
     {
       label: "Peraturan",
-      icon: FileText,
+      icon: SquarePen,
       path: "/smm-smap/peraturan",
     },
     {
       label: "Berita Acara",
-      icon: FileText,
+      icon: ClipboardCheck,
       path: "/smm-smap/berita-acara",
     },
   ],
@@ -141,23 +161,24 @@ export const menuByRole = {
     },
     {
       label: "DTM",
-      icon: FolderKanban,
+      icon: FileText,
       path: "/sdm/dtm",
       children: [
         {
           label: "Riwayat",
+          icon: History,
           path: "/sdm/riwayat-dtm",
         },
       ],
     },
     {
       label: "Peraturan",
-      icon: FileText,
+      icon: SquarePen,
       path: "/sdm/peraturan",
     },
     {
       label: "Berita Acara",
-      icon: FileText,
+      icon: ClipboardCheck,
       path: "/sdm/berita-acara",
     },
   ],

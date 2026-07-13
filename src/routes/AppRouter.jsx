@@ -9,6 +9,7 @@ import DtmPbj from "../pages/pbj/DtmPbj";
 import PeraturanPbj from "../pages/pbj/PeraturanPbj";
 import RiwayatDtmPbj from "../pages/pbj/RiwayatDtmPbj";
 import BeritaAcaraPbj from "../pages/pbj/BeritaAcaraPbj";
+import ChecklistPbj from "../pages/pbj/ChecklistPbj";
 
 import DashboardKeuangan from "../pages/keuangan/DashboardKeuangan";
 import CashOpnameKeuangan from "../pages/keuangan/CashOpnameKeuangan";
@@ -16,6 +17,7 @@ import DtmKeuangan from "../pages/keuangan/DtmKeuangan";
 import KeuanganKeuangan from "../pages/keuangan/KeuanganKeuangan";
 import PeraturanKeuangan from "../pages/keuangan/PeraturanKeuangan";
 import RiwayatDtmKeuangan from "../pages/keuangan/RiwayatDtmKeuangan";
+import BeritaAcaraKeuangan from "../pages/keuangan/BeritaAcaraKeuangan";
 
 import JamKerjaSdm from "../pages/sdm/JamKerjaSdm";
 import DtmSdm from "../pages/sdm/DtmSdm";
@@ -56,6 +58,7 @@ export default function AppRouter() {
         <Route path="dtm" element={<DtmKeuangan />} />
         <Route path="riwayat-dtm" element={<RiwayatDtmKeuangan />} />
         <Route path="peraturan" element={<PeraturanKeuangan />} />
+        <Route path="berita-acara" element={<BeritaAcaraKeuangan />} />
       </Route>
 
       <Route
@@ -72,6 +75,7 @@ export default function AppRouter() {
         <Route path="riwayat-dtm" element={<RiwayatDtmPbj />} />
         <Route path="berita-acara" element={<BeritaAcaraPbj />} />
         <Route path="peraturan" element={<PeraturanPbj />} />
+        <Route path="checklist" element={<ChecklistPbj />} />
       </Route>
 
       <Route

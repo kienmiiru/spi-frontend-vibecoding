@@ -5,9 +5,13 @@ import { ArrowLeft, Loader2, FolderKanban, CheckCircle, FileText, ExternalLink, 
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
 import BulletedTextArea from "../../components/BulletedTextArea";
+import Table from "../../components/Table";
 import { apiFetch, apiFetchBlob } from "../../lib/api";
+import { useConfirm } from "../../context/ConfirmContext";
 
 export default function DtmSmmSmap() {
+  const confirm = useConfirm();
+
   // Main states
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
@@ -116,9 +120,11 @@ export default function DtmSmmSmap() {
         body: JSON.stringify({ statusDtm: nextStatus }),
       });
 
-      showNotification(
-        `Status DTM berhasil diubah menjadi ${nextStatus === "SUDAH_DITERUSKAN" ? "Sudah Selesai" : "Belum Selesai"}`
-      );
+      confirm({
+        title: "",
+        message: `Status DTM berhasil diubah menjadi ${nextStatus === "SUDAH_DITERUSKAN" ? "Sudah Selesai" : "Belum Selesai"}`,
+        type: "info"
+      });
 
       // Update selected state if currently in detail view
       if (selectedDtm && selectedDtm.id === dtm.id) {
@@ -162,7 +168,11 @@ export default function DtmSmmSmap() {
         }),
       });
       setSelectedDtm(updated);
-      showNotification("Detail DTM berhasil diperbarui");
+      confirm({
+        title: "",
+        message: "Detail DTM berhasil diperbarui",
+        type: "info"
+      });
     } catch (err) {
       showNotification("Gagal memperbarui detail DTM: " + err.message, "error");
     } finally {
@@ -207,7 +217,6 @@ export default function DtmSmmSmap() {
       });
       setPreviewBlob(blob);
       setIsPreviewOpen(true);
-      showNotification("Pratinjau dokumen siap ditampilkan");
     } catch (err) {
       showNotification("Gagal memuat pratinjau dokumen: " + err.message, "error");
     } finally {
@@ -263,7 +272,6 @@ export default function DtmSmmSmap() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-gray-700" />
             DTM SMM-SMAP
           </h1>
           <p className="text-xs text-gray-500 mt-1">
@@ -317,33 +325,33 @@ export default function DtmSmmSmap() {
 
       {/* VIEW MODE: LIST TABLE */}
       {viewMode === "list" ? (
-        <div className="border border-gray-300 rounded overflow-hidden bg-white">
+        <div>
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-gray-500">
+            <div className="p-8 text-center text-xs text-gray-500 border border-gray-300 bg-white">
               Memuat data unit kerja...
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                  <th className="px-6 py-3 border-r border-gray-300">Unit Kerja</th>
-                  <th className="px-6 py-3 text-center border-r border-gray-300 w-64">Status DTM</th>
-                  <th className="px-6 py-3 text-center w-60">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-xs text-gray-800 bg-white">
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center w-64">Status DTM</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center w-60">Aksi</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {fakultasList.map((fak) => {
                   const dtm = findDtm(fak.id);
                   const isCreated = !!dtm;
 
                   return (
-                    <tr key={fak.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-semibold border-r border-gray-300 text-sm text-gray-900">
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold text-sm text-gray-900">
                         {fak.namaFakultas}
-                      </td>
+                      </Table.Cell>
 
                       {/* STATUS DTM */}
-                      <td className="px-6 py-4 border-r border-gray-300 text-center">
+                      <Table.Cell className="text-center">
                         {isCreated ? (
                           <span
                             className={`inline-block border px-2.5 py-0.5 rounded text-[10px] font-semibold ${
@@ -357,10 +365,10 @@ export default function DtmSmmSmap() {
                         ) : (
                           <span className="text-[10px] text-gray-400 italic">Belum dibuat di Beranda</span>
                         )}
-                      </td>
+                      </Table.Cell>
 
                       {/* ACTIONS */}
-                      <td className="px-6 py-4 text-center">
+                      <Table.Cell className="text-center">
                         {isCreated ? (
                           <div className="flex items-center justify-center gap-2">
                             <button
@@ -379,12 +387,12 @@ export default function DtmSmmSmap() {
                         ) : (
                           <span className="text-[10px] text-gray-400 font-semibold">-</span>
                         )}
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   );
                 })}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           )}
         </div>
       ) : (
@@ -682,7 +690,7 @@ export default function DtmSmmSmap() {
             <div className="flex-1 overflow-auto p-6 bg-gray-100 flex justify-center">
               <div
                 ref={previewContainerRef}
-                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px]"
+                className="bg-white shadow p-8 max-w-[800px] w-full min-h-[500px] h-fit"
               />
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useRef } from "react";
-import { AlertTriangle, Info, X } from "lucide-react";
+import { AlertTriangle, CircleCheck, Info, X } from "lucide-react";
 
 const ConfirmContext = createContext(null);
 
@@ -33,7 +33,7 @@ export function ConfirmProvider({ children }) {
 
       setState({
         isOpen: true,
-        title: config.title || (config.type === "danger" ? "Konfirmasi Hapus" : "Konfirmasi Tindakan"),
+        title: config.title,
         message: config.message || "",
         confirmText: config.confirmText || (config.type === "danger" ? "Ya, Hapus" : "Ya"),
         cancelText: config.cancelText || "Batal",
@@ -62,21 +62,23 @@ export function ConfirmProvider({ children }) {
       case "danger":
         return {
           icon: <AlertTriangle className="w-6 h-6 text-rose-600" />,
-          iconBg: "bg-rose-50 ring-8 ring-rose-50/50",
-          confirmBtn: "bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-200 focus:ring-rose-500",
+          iconBg: "hidden bg-rose-50 ring-8 ring-rose-50/50",
+          confirmBtn: "bg-c-error hover:bg-c-error-light text-white shadow-sm shadow-rose-200 focus:ring-rose-500",
+          cancelBtn: "bg-c-success hover:bg-c-success-light text-white shadow-sm shadow-rose-200 focus:ring-rose-500",
         };
       case "warning":
         return {
           icon: <AlertTriangle className="w-6 h-6 text-amber-600" />,
           iconBg: "bg-amber-50 ring-8 ring-amber-50/50",
           confirmBtn: "bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-200 focus:ring-amber-500",
+          cancelBtn: "",
         };
       case "info":
       default:
         return {
-          icon: <Info className="w-6 h-6 text-indigo-600" />,
-          iconBg: "bg-indigo-50 ring-8 ring-indigo-50/50",
-          confirmBtn: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200 focus:ring-indigo-500",
+          icon: <CircleCheck className="w-24 h-24 text-c-red"/>,
+          confirmBtn: "hidden",
+          cancelBtn: "hidden",
         };
     }
   };
@@ -89,7 +91,7 @@ export function ConfirmProvider({ children }) {
 
       {/* Modern Premium Confirmation Modal */}
       {state.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed font-poppins inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           {/* Backdrop with elegant blur */}
           <div 
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"
@@ -97,7 +99,7 @@ export function ConfirmProvider({ children }) {
           />
 
           {/* Modal Container */}
-          <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 transform transition-all duration-300 scale-100 overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+          <div className="relative bg-c-cream-100 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 transform transition-all duration-300 scale-100 overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             
             {/* Top Close Button */}
             <button
@@ -114,10 +116,10 @@ export function ConfirmProvider({ children }) {
               </div>
 
               {/* Title & Message */}
-              <h3 className="text-lg font-bold text-gray-900 tracking-tight">
+              <h3 className="text-lg font-bold tracking-tight">
                 {state.title}
               </h3>
-              <p className="text-sm text-gray-500 mt-2 px-2 leading-relaxed">
+              <p className="text-md mt-2 px-2 leading-relaxed">
                 {state.message}
               </p>
             </div>
@@ -127,7 +129,7 @@ export function ConfirmProvider({ children }) {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="w-full sm:w-auto min-w-[100px] px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className={`w-full sm:w-auto min-w-[100px] px-4 py-2.5 border border-gray-200 text-xs font-semibold rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-200 ${config.cancelBtn}`}
               >
                 {state.cancelText}
               </button>

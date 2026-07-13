@@ -13,10 +13,53 @@ import {
 
 import YearDropdown from "../../components/YearDropdown";
 import Notification from "../../components/Notification";
+import Table from "../../components/Table";
 import { apiFetch, apiFetchBlob } from "../../lib/api";
 import { parsePresensiExcel, calculateJamKerja } from "../../utils/excelParser";
+import { useConfirm } from "../../context/ConfirmContext";
+
+// Helper to check compliance for TENDIK
+const checkTendikCompliance = (day, tipe) => {
+  if (tipe !== "TENDIK") return { isOut: false, isHadirOut: false, isPulangOut: false };
+
+  const date = day.dateObj instanceof Date ? day.dateObj : new Date(day.dateStr);
+  const isFriday = date.getDay() === 5;
+
+  const parseToSeconds = (timeStr) => {
+    if (!timeStr) return -1;
+    const parts = timeStr.split(":");
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) || 0;
+    const s = parseInt(parts[2], 10) || 0;
+    return h * 3600 + m * 60 + s;
+  };
+
+  const hadirSec = parseToSeconds(day.hadirTime);
+  const pulangSec = parseToSeconds(day.pulangTime);
+
+  // Jam masuk: 07:00-07:30
+  const masukStart = parseToSeconds("07:00:00");
+  const masukEnd = parseToSeconds("07:30:00");
+
+  // Jam pulang:
+  // Jumat: 16:30-17:30
+  // Lainnya: 16:00-17:00
+  const pulangStart = isFriday ? parseToSeconds("16:30:00") : parseToSeconds("16:00:00");
+  const pulangEnd = isFriday ? parseToSeconds("17:30:00") : parseToSeconds("17:00:00");
+
+  const isHadirOut = hadirSec < masukStart || hadirSec > masukEnd;
+  const isPulangOut = pulangSec < pulangStart || pulangSec > pulangEnd;
+
+  return {
+    isOut: isHadirOut || isPulangOut,
+    isHadirOut,
+    isPulangOut,
+  };
+};
 
 export default function JamKerjaSdm() {
+  const confirm = useConfirm();
+
   // Main states
   const [selectedYear, setSelectedYear] = useState("2026");
   const [fakultasList, setFakultasList] = useState([]);
@@ -149,9 +192,15 @@ export default function JamKerjaSdm() {
 
   // 5. Delete presensi file
   const handleDeletePresensi = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus berkas presensi ini?")) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "",
+      message: "Apakah Anda yakin ingin menghapus berkas presensi ini?",
+      confirmText: "Hapus",
+      cancelText: "Batal",
+      type: "danger"
+    });
+    if (!confirmed) return;
+    
     setIsSaving(true);
     try {
       await apiFetch(`/api/sdm/presensi/${id}`, {
@@ -233,7 +282,6 @@ export default function JamKerjaSdm() {
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Clock className="w-6 h-6 text-gray-700" />
             Jam Kerja & Presensi SDM
           </h1>
           <p className="text-xs text-gray-500 mt-1">
@@ -261,82 +309,80 @@ export default function JamKerjaSdm() {
 
       {/* MAIN VIEW: LIST OF UNIT KERJA */}
       {viewMode === "list" && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div>
           {isLoading || isLoadingDtm ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white">
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500 bg-white border border-gray-300">
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
               <span className="text-sm font-medium">Memuat data unit kerja...</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
-                    <th className="px-6 py-4 border-r border-gray-150">Unit Kerja</th>
-                    <th className="px-6 py-4 text-center border-r border-gray-150">Status DTM</th>
-                    <th className="px-6 py-4 text-center w-48">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm text-gray-700 bg-white">
-                  {fakultasList.map((fak) => {
-                    const dtm = findDtm(fak.id);
-                    const isCreated = !!dtm;
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>Unit Kerja</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center">Status DTM</Table.HeaderCell>
+                  <Table.HeaderCell className="text-center w-48">Aksi</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {fakultasList.map((fak) => {
+                  const dtm = findDtm(fak.id);
+                  const isCreated = !!dtm;
 
-                    return (
-                      <tr key={fak.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-gray-800 border-r border-gray-150">
-                          {fak.namaFakultas}
-                        </td>
+                  return (
+                    <Table.Row key={fak.id}>
+                      <Table.Cell className="font-semibold text-gray-800">
+                        {fak.namaFakultas}
+                      </Table.Cell>
 
-                        {/* STATUS DTM */}
-                        <td className="px-6 py-4 border-r border-gray-150">
-                          <div className="flex justify-center">
-                            {isCreated ? (
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                                  dtm.statusDtm === "SUDAH_DITERUSKAN"
-                                    ? "bg-green-50 border-green-200 text-green-700"
-                                    : "bg-amber-50 border-amber-200 text-amber-700"
-                                }`}
-                              >
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    dtm.statusDtm === "SUDAH_DITERUSKAN"
-                                      ? "bg-green-500"
-                                      : "bg-amber-500"
-                                  }`}
-                                ></span>
-                                {dtm.statusDtm === "SUDAH_DITERUSKAN"
-                                  ? "Sudah Ditandai Selesai"
-                                  : "Belum Ditandai Selesai"}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Belum Dibuat
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* ACTION */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-center">
-                            <button
-                              onClick={() => handleSelectUnitKerja(fak)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-gray-800 text-white hover:bg-gray-700 rounded transition-colors"
+                      {/* STATUS DTM */}
+                      <Table.Cell className="text-center">
+                        <div className="flex justify-center">
+                          {isCreated ? (
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                dtm.statusDtm === "SUDAH_DITERUSKAN"
+                                  ? "bg-green-50 border-green-200 text-green-700"
+                                  : "bg-amber-50 border-amber-200 text-amber-700"
+                              }`}
                             >
-                              Kelola Presensi
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  dtm.statusDtm === "SUDAH_DITERUSKAN"
+                                    ? "bg-green-500"
+                                    : "bg-amber-500"
+                                }`}
+                              ></span>
+                              {dtm.statusDtm === "SUDAH_DITERUSKAN"
+                                ? "Sudah Ditandai Selesai"
+                                : "Belum Ditandai Selesai"}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                              Belum Dibuat
+                            </span>
+                          )}
+                        </div>
+                      </Table.Cell>
+
+                      {/* ACTION */}
+                      <Table.Cell className="text-center">
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => handleSelectUnitKerja(fak)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-gray-800 text-white hover:bg-gray-700 rounded transition-colors"
+                          >
+                            Kelola Presensi
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })}
+              </Table.Body>
+            </Table>
           )}
         </div>
       )}
@@ -541,44 +587,47 @@ export default function JamKerjaSdm() {
                       Detail Kepatuhan Jam Kerja Harian
                     </h3>
 
-                    <div className="overflow-x-auto border border-gray-300 rounded">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-gray-100 border-b border-gray-300 text-[10px] font-bold text-gray-600 uppercase">
-                            <th className="px-4 py-2 border-r border-gray-200 text-center w-12">No</th>
-                            <th className="px-4 py-2 border-r border-gray-200">Tanggal</th>
-                            <th className="px-4 py-2 border-r border-gray-200">Hari</th>
-                            <th className="px-4 py-2 border-r border-gray-200 text-center">Jam Masuk (Awal)</th>
-                            <th className="px-4 py-2 border-r border-gray-200 text-center">Jam Pulang (Akhir)</th>
-                            <th className="px-4 py-2 text-center w-28">Total Durasi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 text-xs text-gray-800 bg-white">
-                          {parsedData.days.map((day, index) => (
-                            <tr key={day.dateStr} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-4 py-2 border-r border-gray-200 text-center font-medium text-gray-400">
+                    <Table>
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.HeaderCell className="px-4 py-2 text-center w-12">No</Table.HeaderCell>
+                          <Table.HeaderCell className="px-4 py-2">Tanggal</Table.HeaderCell>
+                          <Table.HeaderCell className="px-4 py-2">Hari</Table.HeaderCell>
+                          <Table.HeaderCell className="px-4 py-2 text-center">Jam Masuk (Awal)</Table.HeaderCell>
+                          <Table.HeaderCell className="px-4 py-2 text-center">Jam Pulang (Akhir)</Table.HeaderCell>
+                          <Table.HeaderCell className="px-4 py-2 text-center w-28">Total Durasi</Table.HeaderCell>
+                        </Table.Row>
+                      </Table.Header>
+                      <Table.Body>
+                        {parsedData.days.map((day, index) => {
+                          const compliance = checkTendikCompliance(day, selectedPresensiFile?.tipe);
+                          const rowClass = compliance.isOut ? "bg-red-50/80 hover:bg-red-100/80 text-red-950" : "";
+
+                          return (
+                            <Table.Row key={day.dateStr} className={rowClass}>
+                              <Table.Cell className="px-4 py-2 text-center font-medium text-gray-400">
                                 {index + 1}
-                              </td>
-                              <td className="px-4 py-2 border-r border-gray-200 font-semibold text-gray-900">
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-2 font-semibold text-gray-900">
                                 {day.dateStr}
-                              </td>
-                              <td className="px-4 py-2 border-r border-gray-200 capitalize">
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-2 capitalize">
                                 {day.dayName}
-                              </td>
-                              <td className="px-4 py-2 border-r border-gray-200 text-center font-medium text-emerald-700 bg-emerald-50/10">
+                              </Table.Cell>
+                              <Table.Cell className={`px-4 py-2 text-center font-medium ${compliance.isHadirOut && selectedPresensiFile?.tipe === "TENDIK" ? "text-red-700 bg-red-100/20 font-bold" : "text-emerald-700 bg-emerald-50/10"}`}>
                                 {day.hadirTime}
-                              </td>
-                              <td className="px-4 py-2 border-r border-gray-200 text-center font-medium text-amber-700 bg-amber-50/10">
+                              </Table.Cell>
+                              <Table.Cell className={`px-4 py-2 text-center font-medium ${compliance.isPulangOut && selectedPresensiFile?.tipe === "TENDIK" ? "text-red-700 bg-red-100/20 font-bold" : "text-amber-700 bg-amber-50/10"}`}>
                                 {day.pulangTime}
-                              </td>
-                              <td className="px-4 py-2 text-center font-bold text-gray-900 bg-gray-50/50">
+                              </Table.Cell>
+                              <Table.Cell className="px-4 py-2 text-center font-bold text-gray-900 bg-gray-50/50">
                                 {day.totalHours} jam
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                              </Table.Cell>
+                            </Table.Row>
+                          );
+                        })}
+                      </Table.Body>
+                    </Table>
                   </div>
 
                 </div>
