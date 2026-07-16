@@ -7,7 +7,8 @@ import {
   WalletIcon,
   BanknoteArrowDownIcon,
   ClipboardList,
-  FileCheckCorner
+  FileCheckCorner,
+  UserCheck
 } from "lucide-react";
 
 export const menuByRole = {
@@ -49,6 +50,11 @@ export const menuByRole = {
       icon: ClipboardCheck,
       path: "/keuangan/berita-acara",
     },
+    {
+      label: "Ketua Auditor",
+      icon: UserCheck,
+      path: "/keuangan/ketua-auditor",
+    },
   ],
 
   PBJ: [
@@ -83,6 +89,11 @@ export const menuByRole = {
       label: "Berita Acara",
       icon: ClipboardCheck,
       path: "/pbj/berita-acara",
+    },
+    {
+      label: "Ketua Auditor",
+      icon: UserCheck,
+      path: "/pbj/ketua-auditor",
     },
   ],
 
@@ -121,6 +132,11 @@ export const menuByRole = {
       icon: ClipboardCheck,
       path: "/bmn/berita-acara",
     },
+    {
+      label: "Ketua Auditor",
+      icon: UserCheck,
+      path: "/bmn/ketua-auditor",
+    },
   ],
 
   'SMM_SMAP': [
@@ -151,6 +167,11 @@ export const menuByRole = {
       icon: ClipboardCheck,
       path: "/smm-smap/berita-acara",
     },
+    {
+      label: "Ketua Auditor",
+      icon: UserCheck,
+      path: "/smm-smap/ketua-auditor",
+    },
   ],
 
   SDM: [
@@ -180,6 +201,11 @@ export const menuByRole = {
       label: "Berita Acara",
       icon: ClipboardCheck,
       path: "/sdm/berita-acara",
+    },
+    {
+      label: "Ketua Auditor",
+      icon: UserCheck,
+      path: "/sdm/ketua-auditor",
     },
   ],
 };

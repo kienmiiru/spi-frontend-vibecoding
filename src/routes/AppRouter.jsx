@@ -37,6 +37,7 @@ import LembarKerjaBmn from "../pages/bmn/LembarKerjaBmn";
 import PeraturanBmn from "../pages/bmn/PeraturanBmn";
 import RiwayatDtmBmn from "../pages/bmn/RiwayatDtmBmn";
 import BeritaAcaraBmn from "../pages/bmn/BeritaAcaraBmn";
+import KetuaAuditorPage from "../pages/KetuaAuditorPage";
 
 export default function AppRouter() {
   return (
@@ -59,6 +60,7 @@ export default function AppRouter() {
         <Route path="riwayat-dtm" element={<RiwayatDtmKeuangan />} />
         <Route path="peraturan" element={<PeraturanKeuangan />} />
         <Route path="berita-acara" element={<BeritaAcaraKeuangan />} />
+        <Route path="ketua-auditor" element={<KetuaAuditorPage />} />
       </Route>
 
       <Route
@@ -76,6 +78,7 @@ export default function AppRouter() {
         <Route path="berita-acara" element={<BeritaAcaraPbj />} />
         <Route path="peraturan" element={<PeraturanPbj />} />
         <Route path="checklist" element={<ChecklistPbj />} />
+        <Route path="ketua-auditor" element={<KetuaAuditorPage />} />
       </Route>
 
       <Route
@@ -93,6 +96,7 @@ export default function AppRouter() {
         <Route path="riwayat-dtm" element={<RiwayatDtmBmn />} />
         <Route path="berita-acara" element={<BeritaAcaraBmn />} />
         <Route path="peraturan" element={<PeraturanBmn />} />
+        <Route path="ketua-auditor" element={<KetuaAuditorPage />} />
       </Route>
 
       <Route
@@ -109,6 +113,7 @@ export default function AppRouter() {
         <Route path="riwayat-dtm" element={<RiwayatDtmSmmSmap />} />
         <Route path="berita-acara" element={<BeritaAcaraSmmSmap />} />
         <Route path="peraturan" element={<PeraturanSmmSmap />} />
+        <Route path="ketua-auditor" element={<KetuaAuditorPage />} />
       </Route>
 
       <Route
@@ -125,6 +130,7 @@ export default function AppRouter() {
         <Route path="riwayat-dtm" element={<RiwayatDtmSdm />} />
         <Route path="berita-acara" element={<BeritaAcaraSdm />} />
         <Route path="peraturan" element={<PeraturanSdm />} />
+        <Route path="ketua-auditor" element={<KetuaAuditorPage />} />
       </Route>
     </Routes>
   );
