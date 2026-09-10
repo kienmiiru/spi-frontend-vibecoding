@@ -229,13 +229,8 @@ export default function JamKerjaSdm() {
     setIsParsingExcel(true);
     setParsedData(null);
     try {
-      let blob;
-      if (fileObj.linkExcel.startsWith("http")) {
-        const response = await fetch(fileObj.linkExcel);
-        blob = await response.blob();
-      } else {
-        blob = await apiFetchBlob(fileObj.linkExcel);
-      }
+      const response = await fetch(fileObj.linkExcel);
+      const blob = await response.blob();
 
       const fileReader = new FileReader();
       fileReader.onload = (e) => {
